@@ -989,7 +989,11 @@ class phodevi_system extends phodevi_device_interface
 		$date = null;
 		$k = phodevi::read_property('system', 'kernel');
 
-		if(strpos($k, '99') !== false || stripos($k, 'rc') !== false)
+		if(phodevi::is_haiku())
+		{
+			$date = phodevi_haiku_parser::read_sysinfo('kernel_date');
+		}
+		else if(strpos($k, '99') !== false || stripos($k, 'rc') !== false)
 		{
 			// For now at least only report kernel build date when it looks like it's a devel kernel
 			$v = php_uname('v');
@@ -1008,6 +1012,11 @@ class phodevi_system extends phodevi_device_interface
 	}
 	public static function sw_kernel()
 	{
+		if(phodevi::is_haiku())
+		{
+			return phodevi_haiku_parser::read_sysinfo('kernel_release');
+		}
+
 		return php_uname('r');
 	}
 	public static function sw_kernel_parameters()
@@ -2139,6 +2148,21 @@ class phodevi_system extends phodevi_device_interface
 				if(!empty($bat_model))
 				{
 					$batteries[] = trim($bat_manufacturer . ' ' . $bat_model);
+				}
+			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			// Basic existence check for now as we don't parse the binary/text structure yet
+			if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
+			{
+				foreach($b as $battery)
+				{
+					if($battery != '.' && $battery != '..')
+					{
+						// Just report presence for now
+						$batteries[] = 'Haiku Battery';
+					}
 				}
 			}
 		}

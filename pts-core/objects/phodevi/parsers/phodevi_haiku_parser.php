@@ -25,7 +25,22 @@ class phodevi_haiku_parser
 {
 	public static function read_sysinfo($info, $sysinfo_output = null)
 	{
-		$sysinfo = $sysinfo_output == null ? shell_exec('sysinfo 2>&1') : $sysinfo_output;
+		static $sysinfo_cache = null;
+
+		if($sysinfo_output != null)
+		{
+			$sysinfo = $sysinfo_output;
+		}
+		else
+		{
+			if($sysinfo_cache == null)
+			{
+				$sysinfo_cache = shell_exec('sysinfo 2>&1');
+			}
+
+			$sysinfo = $sysinfo_cache;
+		}
+
 		$return = false;
 
 		switch($info)
@@ -77,6 +92,18 @@ class phodevi_haiku_parser
 					$return = $matches[1];
 				}
 				break;
+			case 'kernel_release':
+				if(preg_match('/Kernel: Haiku (.*) \(/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'kernel_date':
+				if(preg_match('/Kernel: .* \((.*)\)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
 			case 'bios_vendor':
 				// Match Vendor under Bios Information section
 				if(preg_match('/Bios Information.*?Vendor: ([^\n]*)/s', str_replace("\n  ", "\n", $sysinfo), $matches))
@@ -122,6 +149,11 @@ class phodevi_haiku_parser
 		{
 			$trimmed_line = trim($line);
 			if(empty($trimmed_line)) continue;
+
+			// The 'device' line for the class starts at the beginning of the line (no indentation)
+			// e.g. "device Network controller..."
+			// The inner 'device' line for details is indented
+			// e.g. "  device 100e:..."
 
 			if(strpos($line, 'device ') === 0)
 			{
