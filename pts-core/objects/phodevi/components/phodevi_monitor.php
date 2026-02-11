@@ -115,6 +115,19 @@ class phodevi_monitor extends phodevi_device_interface
 				$monitor[] = self::edid_monitor_parse($xrandr_props);
 			}
 		}
+		else if($monitor == null && phodevi::is_haiku())
+		{
+			// Try to get EDID from get_edid command if available (it is part of Haiku since 2010)
+			if(pts_client::executable_in_path('get_edid'))
+			{
+				// get_edid dumps raw binary to stdout, so we need to capture it and convert to hex
+				$edid_raw = shell_exec('get_edid 2>/dev/null');
+				if(!empty($edid_raw))
+				{
+					$monitor[] = self::edid_monitor_parse(bin2hex($edid_raw));
+				}
+			}
+		}
 
 		$monitor = pts_arrays::array_to_cleansed_item_string($monitor);
 		return empty($monitor) ? false : $monitor;

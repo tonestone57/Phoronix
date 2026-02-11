@@ -294,6 +294,20 @@ class phodevi_network extends phodevi_device_interface
 				$network = $pci;
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				if(stripos($device['class'], 'Ethernet controller') !== false || stripos($device['class'], 'Network controller') !== false)
+				{
+					$info = $device['device'];
+					// Clean up common prefixes
+					$info = str_replace(array('Ethernet controller: '), '', $info);
+					$network[] = $info;
+				}
+			}
+		}
 
 		return pts_arrays::array_to_cleansed_item_string($network);
 	}
