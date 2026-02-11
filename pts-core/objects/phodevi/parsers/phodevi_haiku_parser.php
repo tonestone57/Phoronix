@@ -53,6 +53,51 @@ class phodevi_haiku_parser
 					$return = $matches[1];
 				}
 				break;
+			case 'system_vendor':
+				if(preg_match('/Vendor: (.*)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'system_product':
+				if(preg_match('/Product Name: (.*)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'system_version':
+				if(preg_match('/Version: (.*)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'system_serial':
+				if(preg_match('/Serial Number: (.*)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'bios_vendor':
+				// Match Vendor under Bios Information section
+				if(preg_match('/Bios Information.*?Vendor: ([^\n]*)/s', str_replace("\n  ", "\n", $sysinfo), $matches))
+				{
+					$return = trim($matches[1]);
+				}
+				break;
+			case 'bios_version':
+				// Match Version under Bios Information section
+				if(preg_match('/Bios Information.*?Version: ([^\n]*)/s', str_replace("\n  ", "\n", $sysinfo), $matches))
+				{
+					$return = trim($matches[1]);
+				}
+				break;
+			case 'bios_date':
+				// Match Release Date under Bios Information section
+				if(preg_match('/Bios Information.*?Release Date: ([^\n]*)/s', str_replace("\n  ", "\n", $sysinfo), $matches))
+				{
+					$return = trim($matches[1]);
+				}
+				break;
 		}
 
 		return $return;
