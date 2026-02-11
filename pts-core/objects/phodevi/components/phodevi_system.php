@@ -1080,6 +1080,7 @@ class phodevi_system extends phodevi_device_interface
 				case 'i86pc':
 				case 'i586':
 				case 'i686-AT386':
+				case 'BePC':
 					$kernel_arch = 'i686';
 					break;
 			}
@@ -1132,6 +1133,10 @@ class phodevi_system extends phodevi_device_interface
 		else if(phodevi::is_haiku())
 		{
 			$os_version = php_uname('v');
+			if(($x = strpos($os_version, ' ')) !== false)
+			{
+				$os_version = substr($os_version, 0, $x);
+			}
 		}
 		else
 		{
