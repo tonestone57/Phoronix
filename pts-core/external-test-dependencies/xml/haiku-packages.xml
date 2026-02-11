@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<PhoronixTestSuite>
+	<ExternalDependencies>
+		<Package>
+			<GenericName>build-utilities</GenericName>
+			<Title>C/C++ Compiler Toolchain</Title>
+			<PossibleNames>gcc, make</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>cmake</GenericName>
+			<Title>CMake</Title>
+			<PossibleNames>cmake</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>git</GenericName>
+			<Title>Git</Title>
+			<PossibleNames>git</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>python</GenericName>
+			<Title>Python</Title>
+			<PossibleNames>python</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>perl</GenericName>
+			<Title>Perl</Title>
+			<PossibleNames>perl</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>pcre</GenericName>
+			<Title>PCRE</Title>
+			<PossibleNames>pcre</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>curl</GenericName>
+			<Title>cURL</Title>
+			<PossibleNames>curl</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>sdl-development</GenericName>
+			<Title>SDL 1.x</Title>
+			<PossibleNames>libsdl</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>sdl2-development</GenericName>
+			<Title>SDL 2.x</Title>
+			<PossibleNames>libsdl2</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>zlib-development</GenericName>
+			<Title>Zlib</Title>
+			<PossibleNames>zlib_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>openssl-development</GenericName>
+			<Title>OpenSSL</Title>
+			<PossibleNames>openssl_devel</PossibleNames>
+		</Package>
+	</ExternalDependencies>
+</PhoronixTestSuite>

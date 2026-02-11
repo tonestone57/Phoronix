@@ -50,6 +50,11 @@ class cpu_temp extends phodevi_sensor
 		{
 			$temp_c = $this->cpu_temp_windows();
 		}
+		else if(phodevi::is_haiku())
+		{
+			// Often CPU temp is exposed via ACPI thermal zones too
+			$temp_c = phodevi_haiku_parser::read_thermal_zone();
+		}
 
 		return $temp_c;
 	}

@@ -71,6 +71,18 @@ class phodevi_chipset extends phodevi_device_interface
 		{
 			$info = phodevi_bsd_parser::read_pciconf_by_class('bridge');
 		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				if(stripos($device['class'], 'Bridge') !== false)
+				{
+					$info = $device['device'];
+					break;
+				}
+			}
+		}
 		else if(phodevi::is_linux() || phodevi::is_hurd())
 		{
 			$info = phodevi_linux_parser::read_pci(array('RAM memory', 'Host bridge'));

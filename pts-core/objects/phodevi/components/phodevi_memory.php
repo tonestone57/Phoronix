@@ -73,6 +73,12 @@ class phodevi_memory extends phodevi_device_interface
 			$mem_type = null;
 			$mem_speed = is_numeric($clock_speed) ? $clock_speed . 'MHz' : null;
 		}
+		else if(phodevi::is_haiku())
+		{
+			// For now Haiku sysinfo doesn't easily expose individual DIMM details, so we might skip this or use total
+			// $mem_size = phodevi_haiku_parser::read_sysinfo('mem_size');
+			$mem_size = false;
+		}
 		else if(phodevi::is_linux())
 		{
 			if((phodevi::is_root() || is_readable('/dev/mem')) && pts_client::executable_in_path('dmidecode'))
@@ -392,6 +398,10 @@ class phodevi_memory extends phodevi_device_interface
 			{
 				$info = null;
 			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			$info = phodevi_haiku_parser::read_sysinfo('mem_size');
 		}
 		else
 		{

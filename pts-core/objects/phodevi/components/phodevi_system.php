@@ -190,6 +190,11 @@ class phodevi_system extends phodevi_device_interface
 		// Returns the vendor identifier used with the External Dependencies and other distro-specific features
 		$vendor = phodevi::is_linux() ? phodevi_linux_parser::read_lsb_distributor_id() : false;
 
+		if(phodevi::is_haiku())
+		{
+			$vendor = 'Haiku';
+		}
+
 		if(!$vendor)
 		{
 			$vendor = phodevi::read_property('system', 'operating-system');
@@ -1063,7 +1068,11 @@ class phodevi_system extends phodevi_device_interface
 		$date = null;
 		$k = phodevi::read_property('system', 'kernel');
 
-		if(strpos($k, '99') !== false || stripos($k, 'rc') !== false)
+		if(phodevi::is_haiku())
+		{
+			$date = phodevi_haiku_parser::read_sysinfo('kernel_date');
+		}
+		else if(strpos($k, '99') !== false || stripos($k, 'rc') !== false)
 		{
 			// For now at least only report kernel build date when it looks like it's a devel kernel
 			$v = php_uname('v');
@@ -1082,6 +1091,11 @@ class phodevi_system extends phodevi_device_interface
 	}
 	public static function sw_kernel()
 	{
+		if(phodevi::is_haiku())
+		{
+			return phodevi_haiku_parser::read_sysinfo('kernel_release');
+		}
+
 		if(phodevi::is_windows())
 		{
 			// CurrentBuild and CurrentVersion are available since at least NT 4.0
@@ -1184,6 +1198,7 @@ class phodevi_system extends phodevi_device_interface
 				case 'i86pc':
 				case 'i586':
 				case 'i686-AT386':
+				case 'BePC':
 					$kernel_arch = 'i686';
 					break;
 			}
@@ -1232,6 +1247,14 @@ class phodevi_system extends phodevi_device_interface
 		else if(phodevi::is_windows())
 		{
 			$os_version = phodevi_windows_parser::get_wmi_object('win32_operatingsystem', 'BuildNumber');
+		}
+		else if(phodevi::is_haiku())
+		{
+			$os_version = php_uname('v');
+			if(($x = strpos($os_version, ' ')) !== false)
+			{
+				$os_version = substr($os_version, 0, $x);
+			}
 		}
 		else
 		{
@@ -1284,6 +1307,10 @@ class phodevi_system extends phodevi_device_interface
 		else if(phodevi::is_hurd())
 		{
 			$vendor = php_uname('v');
+		}
+		else if(phodevi::is_haiku())
+		{
+			$vendor = 'Haiku';
 		}
 		else
 		{
@@ -1389,7 +1416,11 @@ class phodevi_system extends phodevi_device_interface
 			{
 				$os = trim(exec('ver'));
 			}
-		}	
+		}
+		else if(phodevi::is_haiku())
+		{
+			$os = 'Haiku ' . phodevi::read_property('system', 'os-version');
+		}
 		if(($break_point = strpos($os, '(')) > 0)
 		{
 			$os = substr($os, 0, $break_point);
@@ -2215,6 +2246,10 @@ class phodevi_system extends phodevi_device_interface
 					$batteries[] = trim($bat_manufacturer . ' ' . $bat_model);
 				}
 			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			$batteries = phodevi_haiku_parser::read_battery_status();
 		}
 
 		return implode(' + ', $batteries);

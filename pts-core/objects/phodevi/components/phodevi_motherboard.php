@@ -627,6 +627,21 @@ class phodevi_motherboard extends phodevi_device_interface
 				}
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$vendor = phodevi_haiku_parser::read_sysinfo('system_vendor');
+			$product = phodevi_haiku_parser::read_sysinfo('system_product');
+			$version = phodevi_haiku_parser::read_sysinfo('system_version');
+
+			if(!empty($vendor) && !empty($product))
+			{
+				$info = $vendor . ' ' . $product;
+				if(!empty($version))
+				{
+					$info .= ' ' . $version;
+				}
+			}
+		}
 
 		if(!empty($info) && (strpos($info, 'Mac ') !== false || strpos($info, 'MacBook') !== false) && strpos($info, 'Apple') === false)
 		{
