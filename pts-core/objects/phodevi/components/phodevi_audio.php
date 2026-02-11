@@ -105,6 +105,18 @@ class phodevi_audio extends phodevi_device_interface
 				$audio = phodevi_linux_parser::read_pci('Audio device');
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				if(stripos($device['class'], 'Multimedia audio controller') !== false)
+				{
+					$audio = $device['device'];
+					break;
+				}
+			}
+		}
 
 		return $audio;
 	}

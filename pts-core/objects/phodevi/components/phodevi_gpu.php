@@ -137,6 +137,21 @@ class phodevi_gpu extends phodevi_device_interface
 				}
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				if(stripos($device['class'], 'Display controller') !== false || stripos($device['class'], 'VGA') !== false)
+				{
+					if(isset($device['device_id']))
+					{
+						$device_id = $device['device_id'];
+					}
+					break;
+				}
+			}
+		}
 
 		return $device_id;
 	}
@@ -1235,6 +1250,18 @@ class phodevi_gpu extends phodevi_device_interface
 				unset($windows_gpu[$x]);
 			}
 			$info = str_replace('(TM)', '', implode(' + ', $windows_gpu));
+		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				if(stripos($device['class'], 'Display controller') !== false || stripos($device['class'], 'VGA') !== false)
+				{
+					$info = $device['device'];
+					break;
+				}
+			}
 		}
 
 		if(empty($info) || strpos($info, 'Mesa ') !== false || strpos($info, 'Gallium ') !== false || strpos($info, 'DRM ') !== false  || stripos($info, 'Zink ') !== false)

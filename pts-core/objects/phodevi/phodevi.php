@@ -42,6 +42,7 @@ class phodevi extends phodevi_base
 		'bsd' => false,
 		'hurd' => false,
 		'minix' => false,
+		'haiku' => false,
 		'windows' => false
 		);
 
@@ -617,6 +618,11 @@ class phodevi extends phodevi_base
 			self::$operating_system = 'Unknown';
 		}
 
+		if(self::$operating_system == 'Haiku')
+		{
+			self::$operating_systems['haiku'] = true;
+		}
+
 		self::load_sensors();
 	}
 	private static function detect_graphics()
@@ -977,6 +983,10 @@ class phodevi extends phodevi_base
 	public static function is_hurd()
 	{
 		return self::$operating_systems['hurd'];
+	}
+	public static function is_haiku()
+	{
+		return self::$operating_systems['haiku'];
 	}
 	public static function is_windows()
 	{
