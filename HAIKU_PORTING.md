@@ -1,73 +1,50 @@
 # Porting Phoronix Test Suite to Haiku OS
 
-This document outlines the requirements and changes needed to port the Phoronix Test Suite (PTS) to Haiku OS.
+This document outlines the status and implementation details of the Phoronix Test Suite (PTS) port to Haiku OS.
 
-## Overview
+## Status: Initial Implementation Complete
 
-The Phoronix Test Suite is primarily written in PHP and relies on shell commands for system interaction. To support Haiku, we need to:
-1.  Enable OS detection in the core framework.
-2.  Implement a parser for Haiku-specific system commands (`sysinfo`, `listdev`, etc.).
-3.  Update hardware detection components to use the Haiku parser.
+The core framework detection and hardware parsing scaffolding have been implemented.
 
-## Core Modifications
+## Implementation Details
 
-### 1. `pts-core/objects/pts_types.php`
--   **Add Haiku to supported operating systems:**
-    -   Update `operating_systems()` to include `array('Haiku')`.
-    -   Update `known_operating_systems()` to include `'Haiku'`.
+### 1. Core Modifications
+-   **`pts-core/objects/pts_types.php`**: Added 'Haiku' to supported operating systems.
+-   **`pts-core/objects/phodevi/phodevi.php`**:
+    -   Added 'haiku' to operating systems array.
+    -   Implemented `is_haiku()` detection method.
+    -   Updated `initial_setup()` to set the haiku flag when `php_uname('s')` returns "Haiku".
 
-### 2. `pts-core/objects/phodevi/phodevi.php`
--   **OS Detection Logic:**
-    -   Add `'haiku' => false` to the `private static $operating_systems` array.
-    -   Implement `public static function is_haiku()` to return the detection status.
-    -   Update `initial_setup()` to detect Haiku using `php_uname('s')` (which returns "Haiku").
+### 2. New Parser: `phodevi_haiku_parser`
+-   Located at: `pts-core/objects/phodevi/parsers/phodevi_haiku_parser.php`
+-   **`read_sysinfo($info)`**: Parses `sysinfo` output for:
+    -   `cpu_model`: CPU brand string.
+    -   `cpu_count`: Number of logical CPUs.
+    -   `mem_size`: Total physical memory.
+-   **`read_listdev()`**: Parses `listdev` output to identify PCI/USB devices. Handles device classes and vendor/device strings.
+-   **`read_disk_info()`**: Parses `df -h` output to retrieve filesystem usage and mounting information.
 
-## New Parser: `phodevi_haiku_parser`
+### 3. Component Updates
+The following components have been updated to utilize `phodevi_haiku_parser` when running on Haiku:
 
-A new class `phodevi_haiku_parser` should be created in `pts-core/objects/phodevi/parsers/phodevi_haiku_parser.php`. This class will handle parsing of Haiku-specific commands.
-
-### Suggested Methods:
--   `read_sysinfo()`: Parses the output of the `sysinfo` command to retrieve CPU and memory information.
--   `read_listdev()`: Parses the output of `listdev` to identify PCI/USB devices (GPU, Network, Audio, etc.).
--   `read_disk_info()`: Uses `df` or Haiku-specific API to get disk usage and filesystem info.
-
-## Component Updates
-
-The following components in `pts-core/objects/phodevi/components/` need updates to use `phodevi_haiku_parser` when running on Haiku:
-
-### `phodevi_system.php`
--   **OS Name:** Use `php_uname('s')` or `uname` command.
--   **Kernel Version:** Use `uname -v` or `uname -r`.
--   **Hostname:** Use `hostname` command.
-
-### `phodevi_cpu.php`
--   **Model:** Parse from `sysinfo -cpu` or `/proc/cpuinfo` if available (Haiku doesn't have standard `/proc` like Linux, so `sysinfo` is key).
--   **Core Count:** Parse from `sysinfo -cpu`.
--   **Frequency:** Parse from `sysinfo -cpu`.
-
-### `phodevi_memory.php`
--   **Capacity:** Parse from `sysinfo -mem`.
--   **Details:** Parse from `sysinfo` or `listdev` if memory controller info is available.
-
-### `phodevi_gpu.php`
--   **Model:** Parse from `listdev` (look for Display controller).
--   **Driver:** Check for loaded drivers via `listdev` or `listimage`.
-
-### `phodevi_disk.php`
--   **Filesystem:** Use `df` or `mount` command output.
--   **Capacity:** Use `df` output.
+-   **`phodevi_system.php`**: OS version and vendor detection.
+-   **`phodevi_cpu.php`**: CPU model and core count detection via `sysinfo`.
+-   **`phodevi_memory.php`**: Memory capacity detection via `sysinfo`.
+-   **`phodevi_gpu.php`**: GPU model detection via `listdev` (scanning for 'Display controller' or 'VGA').
+-   **`phodevi_disk.php`**: Disk capacity and filesystem reporting via `df`.
 
 ## Required Commands on Haiku
-The following commands are expected to be available on a standard Haiku installation:
+The implementation relies on these standard Haiku commands:
 -   `sysinfo`
 -   `listdev`
 -   `uname`
 -   `df`
--   `mount`
 -   `hostname`
 -   `php` (CLI)
 
-## Next Steps
-1.  Implement the changes outlined above.
-2.  Test on a running Haiku system.
-3.  Refine parsing logic based on actual command output on Haiku.
+## Next Steps / To-Do
+1.  **Testing**: Verify the code on a live Haiku system to ensure parser regexes match the exact output formats of the command-line tools.
+2.  **Refinement**:
+    -   Improve detailed CPU feature detection (flags) if possible.
+    -   Add sensor monitoring support if Haiku exposes hardware sensors via command line or file system.
+    -   Expand `read_listdev` parsing to capture more device details (IDs, revisions) if needed.
