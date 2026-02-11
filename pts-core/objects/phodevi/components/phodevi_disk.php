@@ -321,7 +321,28 @@ class phodevi_disk extends phodevi_device_interface
 			{
 				if($fs['mount'] == '/' && !empty($fs['size']))
 				{
-					$disks[] = $fs['size'] . ' ' . $fs['filesystem'];
+					// Try to make the disk string look a bit better if it's a device path
+					$disk_str = $fs['size'];
+					$fs_dev = $fs['filesystem'];
+
+					if(strpos($fs_dev, '/dev/disk/') === 0)
+					{
+						$fs_dev = basename($fs_dev);
+						if($fs_dev == 'raw')
+						{
+							$fs_dev = basename(dirname($fs['filesystem'])); // e.g. /dev/disk/.../0/raw -> 0
+							if(is_numeric($fs_dev))
+							{
+								$parent = basename(dirname(dirname($fs['filesystem'])));
+								if($parent != 'disk')
+								{
+									$fs_dev = $parent; // e.g. virtio_block
+								}
+							}
+						}
+					}
+
+					$disks[] = $disk_str . ' ' . $fs_dev;
 				}
 			}
 		}

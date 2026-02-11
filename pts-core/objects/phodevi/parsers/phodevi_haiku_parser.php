@@ -229,6 +229,24 @@ class phodevi_haiku_parser
 
 		return $filesystems;
 	}
+
+	public static function read_battery_status()
+	{
+		$batteries = array();
+		if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
+		{
+			foreach($b as $battery)
+			{
+				if($battery != '.' && $battery != '..')
+				{
+					// Try to read content? For now just report ID
+					// $content = file_get_contents('/dev/power/acpi_battery/' . $battery);
+					$batteries[] = 'ACPI Battery ' . $battery;
+				}
+			}
+		}
+		return $batteries;
+	}
 }
 
 ?>
