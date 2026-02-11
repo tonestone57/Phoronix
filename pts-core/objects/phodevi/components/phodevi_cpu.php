@@ -508,6 +508,23 @@ class phodevi_cpu extends phodevi_device_interface
 				$info = null;
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			// CPU #0: "Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz"
+			$model = phodevi_haiku_parser::read_sysinfo('cpu_model');
+			if(($x = strrpos($model, '@ ')) !== false)
+			{
+				$freq = substr($model, $x + 2);
+				if(($x = strpos($freq, 'GHz')) !== false)
+				{
+					$info = substr($freq, 0, $x);
+				}
+				else if(($x = strpos($freq, 'MHz')) !== false)
+				{
+					$info = substr($freq, 0, $x) / 1000;
+				}
+			}
+		}
 		else if($info == null && phodevi::is_windows())
 		{
 			$info = phodevi_windows_parser::get_wmi_object('win32_processor', 'MaxClockSpeed');

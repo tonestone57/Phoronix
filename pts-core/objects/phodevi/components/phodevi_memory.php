@@ -75,9 +75,19 @@ class phodevi_memory extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// For now Haiku sysinfo doesn't easily expose individual DIMM details, so we might skip this or use total
-			// $mem_size = phodevi_haiku_parser::read_sysinfo('mem_size');
-			$mem_size = false;
+			if(pts_client::executable_in_path('dmidecode'))
+			{
+				$mem_size = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Size', false, array('Not Installed', 'No Module Installed', 'Undefined', 'Not Specified'));
+				$mem_speed = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Configured Clock Speed', true, array('Unknown', 'Undefined', 'Not Specified'));
+				$mem_type = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Type', true, array('Unknown', 'Other', 'Flash', 'Undefined', 'Not Specified'));
+				$mem_manufacturer = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Manufacturer', true, array('Unknown', 'Undefined', 'Not Specified'));
+				$mem_part = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Part Number', true, array('Unknown', 'Undefined', 'Not Specified'));
+			}
+			else
+			{
+				// $mem_size = phodevi_haiku_parser::read_sysinfo('mem_size');
+				$mem_size = false;
+			}
 		}
 		else if(phodevi::is_linux())
 		{

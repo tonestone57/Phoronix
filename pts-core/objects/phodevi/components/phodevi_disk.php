@@ -55,6 +55,23 @@ class phodevi_disk extends phodevi_device_interface
 			$mounts = phodevi::$vfs->mounts;
 		}
 
+		if(phodevi::is_haiku() && $mounts == null)
+		{
+			// Haiku mount output example:
+			// /dev/disk/virtual/virtio_block/0/raw on / type bfs (rw)
+			$mounts_out = shell_exec('mount 2>&1');
+			if(preg_match('#(.*?) on ' . $mount_point . ' type (.*?) \((.*?)\)#', $mounts_out, $matches))
+			{
+				$mount_options = array(
+					'device' => $matches[1],
+					'mount-point' => $mount_point,
+					'file-system' => $matches[2],
+					'mount-options' => $matches[3]
+					);
+				return $mount_options;
+			}
+		}
+
 		do
 		{
 			$mount_point = dirname($mount_point);
@@ -496,6 +513,12 @@ class phodevi_disk extends phodevi_device_interface
 	}
 	public static function hdd_scheduler()
 	{
+		if(phodevi::is_haiku())
+		{
+			// Haiku I/O scheduler is not user-configurable per disk in the same way as Linux
+			return null;
+		}
+
 		if(!phodevi::is_linux())
 		{
 			return null;

@@ -95,6 +95,11 @@ class cpu_freq extends phodevi_sensor
 		{
 			return false;
 		}
+		else if(phodevi::is_haiku())
+		{
+			// Fallback to default frequency as real-time monitoring isn't standard yet
+			$frequency = phodevi::read_property('cpu', 'default-frequency') * 1000;
+		}
 
 		return pts_math::set_precision($frequency, 2);
 	}

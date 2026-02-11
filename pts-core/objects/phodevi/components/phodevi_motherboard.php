@@ -455,6 +455,10 @@ class phodevi_motherboard extends phodevi_device_interface
 				$bios_version = trim(phodevi_windows_parser::get_wmi_object('win32_bios', 'Name'));
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$bios_version = phodevi_haiku_parser::read_sysinfo('bios_version');
+		}
 
 		if($bios_version == 'Google')
 		{

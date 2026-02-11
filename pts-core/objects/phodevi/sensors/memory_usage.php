@@ -47,6 +47,16 @@ class memory_usage extends phodevi_sensor
 			$ps = trim(shell_exec('powershell -NoProfile "((Get-WmiObject Win32_OperatingSystem).TotalVisibleMemorySize - (Get-WmiObject Win32_OperatingSystem).FreePhysicalMemory)"'));
 			return round($ps / 1024);
 		}
+		else if(phodevi::is_haiku())
+		{
+			// Parsing sysinfo -mem to get usage
+			// 32768 MB total, 25000 MB used (76%)
+			$sysinfo_mem = shell_exec('sysinfo -mem 2>&1');
+			if(preg_match('/([0-9]+) MB used/', $sysinfo_mem, $matches))
+			{
+				return $matches[1];
+			}
+		}
 	}
 	private function mem_usage_linux()
 	{
