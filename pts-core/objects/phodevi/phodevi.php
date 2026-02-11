@@ -609,6 +609,11 @@ class phodevi extends phodevi_base
 			self::$operating_system = 'Unknown';
 		}
 
+		if(self::$operating_system == 'Haiku')
+		{
+			self::$operating_systems['haiku'] = true;
+		}
+
 		self::load_sensors();
 	}
 	private static function detect_graphics()

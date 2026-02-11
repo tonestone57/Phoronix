@@ -75,8 +75,9 @@ class phodevi_memory extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// TODO: Implement Haiku Memory string detection
+			// For now Haiku sysinfo doesn't easily expose individual DIMM details, so we might skip this or use total
 			// $mem_size = phodevi_haiku_parser::read_sysinfo('mem_size');
+			$mem_size = false;
 		}
 		else if(phodevi::is_linux())
 		{
@@ -327,8 +328,7 @@ class phodevi_memory extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// TODO: Implement Haiku Memory capacity detection
-			// $info = phodevi_haiku_parser::read_sysinfo('mem_capacity');
+			$info = phodevi_haiku_parser::read_sysinfo('mem_size');
 		}
 		else
 		{

@@ -143,8 +143,7 @@ class phodevi_cpu extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// TODO: Implement Haiku CPU core count detection
-			// $info = phodevi_haiku_parser::read_sysinfo('cpu_count');
+			$info = phodevi_haiku_parser::read_sysinfo('cpu_count');
 		}
 
 		if(phodevi::is_windows())
@@ -650,8 +649,7 @@ class phodevi_cpu extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// TODO: Implement Haiku CPU model detection
-			// $info = phodevi_haiku_parser::read_sysinfo('cpu_model');
+			$info = phodevi_haiku_parser::read_sysinfo('cpu_model');
 		}
 
 		if(empty($info) || strpos($info, 'rev ') !== false)

@@ -23,25 +23,108 @@
 
 class phodevi_haiku_parser
 {
-	public static function read_sysinfo($arg)
+	public static function read_sysinfo($info)
 	{
-		// TODO: Implement parsing of sysinfo command
-		// sysinfo -cpu
-		// sysinfo -mem
-		// etc.
-		return null;
+		$sysinfo = shell_exec('sysinfo 2>&1');
+		$return = false;
+
+		switch($info)
+		{
+			case 'cpu_model':
+				// CPU #0: "Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz"
+				if(preg_match('/CPU #0: "(.*)"/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'cpu_count':
+				$return = substr_count($sysinfo, 'CPU #');
+				break;
+			case 'mem_size':
+				// Memory: 16384 MB
+				if(preg_match('/Memory:\s+([0-9]+)\s+MB/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+		}
+
+		return $return;
 	}
 
 	public static function read_listdev()
 	{
-		// TODO: Implement parsing of listdev command for PCI/USB devices
-		return null;
+		$listdev = shell_exec('listdev 2>&1');
+		$devices = array();
+
+		// Basic parsing of listdev output
+		// device Network controller [2|0|0]
+		//   vendor 8086: Intel Corporation
+		//   device 100e: 82540EM Gigabit Ethernet Controller
+
+		$lines = explode("\n", $listdev);
+		$current_device = array();
+
+		foreach($lines as $line)
+		{
+			$trimmed_line = trim($line);
+			if(empty($trimmed_line)) continue;
+
+			if(strpos($line, 'device ') === 0)
+			{
+				if(!empty($current_device))
+				{
+					$devices[] = $current_device;
+				}
+				$current_device = array('class' => substr($trimmed_line, 7));
+			}
+			else if(strpos($trimmed_line, 'vendor ') === 0)
+			{
+				$current_device['vendor'] = substr($trimmed_line, 7);
+			}
+			else if(strpos($trimmed_line, 'device ') === 0) // inner device line
+			{
+				$current_device['device'] = substr($trimmed_line, 7);
+			}
+		}
+		if(!empty($current_device))
+		{
+			$devices[] = $current_device;
+		}
+
+		return $devices;
 	}
 
 	public static function read_disk_info()
 	{
-		// TODO: Implement parsing of disk info (df, mount, or other commands)
-		return null;
+		// Use df
+		$df_output = shell_exec('df -h 2>&1');
+		$filesystems = array();
+
+		// Parse df output
+		// Filesystem      Size  Used Avail Use% Mounted on
+		// /dev/disk/...   ...   ...  ...   ...  /
+
+		$lines = explode("\n", $df_output);
+		array_shift($lines); // Remove header
+
+		foreach($lines as $line)
+		{
+			$parts = preg_split('/\s+/', trim($line));
+			if(count($parts) >= 6)
+			{
+				$filesystems[] = array(
+					'filesystem' => $parts[0],
+					'size' => $parts[1],
+					'used' => $parts[2],
+					'avail' => $parts[3],
+					'use_percent' => $parts[4],
+					'mount' => $parts[5]
+				);
+			}
+		}
+
+		return $filesystems;
 	}
 }
 

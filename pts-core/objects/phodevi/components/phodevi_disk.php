@@ -314,6 +314,17 @@ class phodevi_disk extends phodevi_device_interface
 			}
 			$disks = $models;
 		}
+		else if(phodevi::is_haiku())
+		{
+			$df_output = phodevi_haiku_parser::read_disk_info();
+			foreach($df_output as $fs)
+			{
+				if($fs['mount'] == '/' && !empty($fs['size']))
+				{
+					$disks[] = $fs['size'] . ' ' . $fs['filesystem'];
+				}
+			}
+		}
 
 		if(count($disks) == 0)
 		{
