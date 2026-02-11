@@ -23,9 +23,9 @@
 
 class phodevi_haiku_parser
 {
-	public static function read_sysinfo($info)
+	public static function read_sysinfo($info, $sysinfo_output = null)
 	{
-		$sysinfo = shell_exec('sysinfo 2>&1');
+		$sysinfo = $sysinfo_output == null ? shell_exec('sysinfo 2>&1') : $sysinfo_output;
 		$return = false;
 
 		switch($info)
@@ -47,14 +47,22 @@ class phodevi_haiku_parser
 					$return = $matches[1];
 				}
 				break;
+			case 'cpu_features':
+				if(preg_match('/Features: (.*)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
 		}
 
 		return $return;
 	}
 
-	public static function read_listdev()
+	public static function read_listdev($listdev_output = null)
 	{
-		$listdev = shell_exec('listdev 2>&1');
+		// Hardware sensor monitoring is not yet supported on Haiku as there isn't a standardized command-line interface for it yet.
+
+		$listdev = $listdev_output == null ? shell_exec('listdev 2>&1') : $listdev_output;
 		$devices = array();
 
 		// Basic parsing of listdev output
@@ -80,11 +88,29 @@ class phodevi_haiku_parser
 			}
 			else if(strpos($trimmed_line, 'vendor ') === 0)
 			{
-				$current_device['vendor'] = substr($trimmed_line, 7);
+				$vendor_str = substr($trimmed_line, 7);
+				if(($c = strpos($vendor_str, ': ')) !== false)
+				{
+					$current_device['vendor_id'] = substr($vendor_str, 0, $c);
+					$current_device['vendor'] = substr($vendor_str, $c + 2);
+				}
+				else
+				{
+					$current_device['vendor'] = $vendor_str;
+				}
 			}
 			else if(strpos($trimmed_line, 'device ') === 0) // inner device line
 			{
-				$current_device['device'] = substr($trimmed_line, 7);
+				$device_str = substr($trimmed_line, 7);
+				if(($c = strpos($device_str, ': ')) !== false)
+				{
+					$current_device['device_id'] = substr($device_str, 0, $c);
+					$current_device['device'] = substr($device_str, $c + 2);
+				}
+				else
+				{
+					$current_device['device'] = $device_str;
+				}
 			}
 		}
 		if(!empty($current_device))
@@ -95,10 +121,10 @@ class phodevi_haiku_parser
 		return $devices;
 	}
 
-	public static function read_disk_info()
+	public static function read_disk_info($df_output = null)
 	{
 		// Use df
-		$df_output = shell_exec('df -h 2>&1');
+		$df_output = $df_output == null ? shell_exec('df -h 2>&1') : $df_output;
 		$filesystems = array();
 
 		// Parse df output
