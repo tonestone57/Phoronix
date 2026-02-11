@@ -138,6 +138,23 @@ class phodevi_network extends phodevi_device_interface
 				$local_ip = $hostname_i;
 			}
 		}
+		else if(phodevi::is_haiku() && ($ifconfig = pts_client::executable_in_path('ifconfig')))
+		{
+			// Haiku ifconfig output:
+			// /dev/net/virtio/0
+			// 	hardware address: 52:54:00:12:34:56
+			// 	inet addr: 10.0.2.15, Bcast: 10.0.2.255, Mask: 255.255.255.0
+
+			$ifconfig = shell_exec($ifconfig . ' 2>&1');
+			if(preg_match('/inet addr: ([0-9\.]+)/', $ifconfig, $matches))
+			{
+				$ipv4 = $matches[1];
+				if($ipv4 != '127.0.0.1')
+				{
+					$local_ip = $ipv4;
+				}
+			}
+		}
 
 		if(empty($local_ip) && function_exists('net_get_interfaces'))
 		{
@@ -194,6 +211,14 @@ class phodevi_network extends phodevi_device_interface
 			if(strlen($getmac) <= 17)
 			{
 				$mac = str_replace('-', ':', $getmac);
+			}
+		}
+		else if(phodevi::is_haiku() && ($ifconfig = pts_client::executable_in_path('ifconfig')))
+		{
+			$ifconfig = shell_exec($ifconfig . ' 2>&1');
+			if(preg_match('/hardware address: ([0-9a-fA-F:]+)/', $ifconfig, $matches))
+			{
+				$mac = $matches[1];
 			}
 		}
 

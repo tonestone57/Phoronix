@@ -1617,6 +1617,10 @@ class phodevi_system extends phodevi_device_interface
 				$desktop_version = pts_strings::last_in_string(trim(shell_exec('cosmic-launcher -V 2> /dev/null')));
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$desktop_environment = 'Haiku';
+		}
 
 		if(!empty($desktop_environment))
 		{
@@ -1637,6 +1641,10 @@ class phodevi_system extends phodevi_device_interface
 		if(phodevi::is_windows())
 		{
 			// TODO: determine what to do for Windows support
+		}
+		else if(phodevi::is_haiku())
+		{
+			$display_servers[] = 'Haiku app_server';
 		}
 		else
 		{

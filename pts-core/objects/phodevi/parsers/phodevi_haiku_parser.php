@@ -104,18 +104,6 @@ class phodevi_haiku_parser
 					$return = $matches[1];
 				}
 				break;
-			case 'kernel_release':
-				if(preg_match('/Kernel: Haiku (.*) \(/', $sysinfo, $matches))
-				{
-					$return = $matches[1];
-				}
-				break;
-			case 'kernel_date':
-				if(preg_match('/Kernel: .* \((.*)\)/', $sysinfo, $matches))
-				{
-					$return = $matches[1];
-				}
-				break;
 			case 'bios_vendor':
 				// Match Vendor under Bios Information section
 				if(preg_match('/Bios Information.*?Vendor: ([^\n]*)/s', str_replace("\n  ", "\n", $sysinfo), $matches))
@@ -291,15 +279,15 @@ class phodevi_haiku_parser
 							$content = trim(file_get_contents($path));
 							if(is_numeric($content))
 							{
-								if($content > 2000)
-								{
-									// Deci-Kelvin
-									$content = ($content / 10) - 273.15;
-								}
-								else if($content > 1000)
+								if($content > 10000)
 								{
 									// Milli-Celsius
 									$content = $content / 1000;
+								}
+								else if($content > 2000)
+								{
+									// Deci-Kelvin
+									$content = ($content / 10) - 273.15;
 								}
 								$temp = $content;
 								break 2;

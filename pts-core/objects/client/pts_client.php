@@ -1652,6 +1652,17 @@ class pts_client
 			$ps = shell_exec('ps -ef 2>&1');
 			$running = strpos($ps, ' ' . strtolower($process)) != false ? 'TRUE' : null;
 		}
+		else if(phodevi::is_haiku())
+		{
+			$ps = shell_exec('ps 2>&1');
+			// Haiku ps output:
+			// team  thread  name
+			// 123   123     myprocess
+			if(preg_match('/[0-9]+\s+[0-9]+\s+(.*' . preg_quote($process) . '.*)/i', $ps))
+			{
+				$running = 'TRUE';
+			}
+		}
 		else if(pts_client::executable_in_path('ps') != false)
 		{
 			// Checks if process is running on the system
@@ -1766,6 +1777,11 @@ class pts_client
 			else
 			{
 				$path = '/bin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/pkg/bin:/usr/games';
+			}
+
+			if(phodevi::is_haiku())
+			{
+				$path = '/boot/system/bin:/boot/system/non-packaged/bin:/boot/home/config/bin:/boot/home/config/non-packaged/bin:' . $path;
 			}
 		}
 		if(phodevi::is_windows())

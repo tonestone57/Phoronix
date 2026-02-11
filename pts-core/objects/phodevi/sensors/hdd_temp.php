@@ -91,6 +91,10 @@ class hdd_temp extends phodevi_sensor
 		{
 			$temp = $this->hdd_temp_linux();
 		}
+		else if(phodevi::is_haiku())
+		{
+			$temp = -1;
+		}
 
 		return pts_math::set_precision($temp, 2);
 	}

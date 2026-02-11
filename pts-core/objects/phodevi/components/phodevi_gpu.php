@@ -743,6 +743,12 @@ class phodevi_gpu extends phodevi_device_interface
 				$video_ram = $video_ram / 1048576;
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			// TODO: Implement proper VRAM detection for Haiku
+			// For now, listdev might not expose it easily.
+			$video_ram = -1;
+		}
 		else
 		{
 			// Try reading video memoty from GLX_MESA_query_renderer output in glxinfo
