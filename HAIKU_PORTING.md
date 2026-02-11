@@ -49,4 +49,3 @@ The implementation relies on these standard Haiku commands:
 ## Next Steps / To-Do
 1.  **Run-Time Testing**: Verify the code on a live Haiku system to ensure all regexes match the real-world output formats.
 2.  **Sensor Support**: Hardware sensor monitoring is partially implemented (thermal zones and battery) via `/dev/power/acpi_thermal` and `/dev/power/acpi_battery`.
-3.  **Compiler Detection**: Verify `phodevi_system::sw_compiler` correctly identifies Haiku's GCC toolchain.

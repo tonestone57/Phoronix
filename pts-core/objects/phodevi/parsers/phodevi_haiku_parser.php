@@ -30,6 +30,7 @@ class phodevi_haiku_parser
 		if($sysinfo_output != null)
 		{
 			$sysinfo = $sysinfo_output;
+			$sysinfo_cache = $sysinfo_output;
 		}
 		else
 		{
