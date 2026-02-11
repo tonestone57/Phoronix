@@ -1267,7 +1267,14 @@ class phodevi_cpu extends phodevi_device_interface
 	}
 	public static function set_cpu_feature_flags()
 	{
-		$flags = explode(' ', self::read_cpuinfo_line('flags'));
+		if(phodevi::is_haiku())
+		{
+			$flags = explode(' ', phodevi_haiku_parser::read_sysinfo('cpu_features'));
+		}
+		else
+		{
+			$flags = explode(' ', self::read_cpuinfo_line('flags'));
+		}
 
 		self::$cpu_flags = 0;
 		foreach(self::get_cpu_feature_constants() as $feature => $value)
