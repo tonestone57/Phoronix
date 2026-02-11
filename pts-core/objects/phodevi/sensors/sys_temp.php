@@ -38,6 +38,10 @@ class sys_temp extends phodevi_sensor
 		{
 			$sys_temp = $this->sys_temp_bsd();
 		}
+		elseif(phodevi::is_haiku())
+		{
+			$sys_temp = phodevi_haiku_parser::read_thermal_zone();
+		}
 
 		return $sys_temp;
 	}
