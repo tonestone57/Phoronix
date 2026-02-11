@@ -1623,7 +1623,7 @@ class phodevi_cpu extends phodevi_device_interface
 	{
 		if(phodevi::is_haiku())
 		{
-			$flags = explode(' ', phodevi_haiku_parser::read_sysinfo('cpu_features'));
+			$flags = explode(' ', strtolower(phodevi_haiku_parser::read_sysinfo('cpu_features')));
 		}
 		else
 		{

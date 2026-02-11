@@ -93,19 +93,7 @@ class phodevi_haiku_parser
 				}
 				break;
 			case 'kernel_release':
-				if(preg_match('/Kernel: Haiku (.*) \(/', $sysinfo, $matches))
-				{
-					$return = $matches[1];
-				}
-				break;
-			case 'kernel_date':
-				if(preg_match('/Kernel: .* \((.*)\)/', $sysinfo, $matches))
-				{
-					$return = $matches[1];
-				}
-				break;
-			case 'kernel_release':
-				if(preg_match('/Kernel: Haiku (.*) \(/', $sysinfo, $matches))
+				if(preg_match('/Kernel: Haiku (.*?) \(/', $sysinfo, $matches))
 				{
 					$return = $matches[1];
 				}
