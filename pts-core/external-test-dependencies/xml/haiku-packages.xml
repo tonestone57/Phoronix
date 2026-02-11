@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<PhoronixTestSuite>
+	<ExternalDependencies>
+		<Package>
+			<GenericName>build-utilities</GenericName>
+			<PossibleNames>gcc, make</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>cmake</GenericName>
+			<PossibleNames>cmake</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>git</GenericName>
+			<PossibleNames>git</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>python</GenericName>
+			<PossibleNames>python, python3</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>perl</GenericName>
+			<PossibleNames>perl</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>pcre</GenericName>
+			<PossibleNames>pcre</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>curl</GenericName>
+			<PossibleNames>curl</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>sdl-development</GenericName>
+			<PossibleNames>libsdl</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>sdl2-development</GenericName>
+			<PossibleNames>libsdl2</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>zlib-development</GenericName>
+			<PossibleNames>zlib_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>openssl-development</GenericName>
+			<PossibleNames>openssl_devel</PossibleNames>
+		</Package>
+	</ExternalDependencies>
+</PhoronixTestSuite>

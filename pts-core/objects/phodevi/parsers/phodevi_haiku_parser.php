@@ -154,6 +154,7 @@ class phodevi_haiku_parser
 			// e.g. "device Network controller..."
 			// The inner 'device' line for details is indented
 			// e.g. "  device 100e:..."
+			// Note: We use strpos($line, 'device ') === 0 to detect parent items (no indentation)
 
 			if(strpos($line, 'device ') === 0)
 			{
@@ -239,9 +240,15 @@ class phodevi_haiku_parser
 			{
 				if($battery != '.' && $battery != '..')
 				{
-					// Try to read content? For now just report ID
-					// $content = file_get_contents('/dev/power/acpi_battery/' . $battery);
-					$batteries[] = 'ACPI Battery ' . $battery;
+					if(is_file('/dev/power/acpi_battery/' . $battery . '/model'))
+					{
+						$model = trim(file_get_contents('/dev/power/acpi_battery/' . $battery . '/model'));
+						$batteries[] = 'ACPI Battery ' . $battery . ' (' . $model . ')';
+					}
+					else
+					{
+						$batteries[] = 'ACPI Battery ' . $battery;
+					}
 				}
 			}
 		}
@@ -251,25 +258,39 @@ class phodevi_haiku_parser
 	public static function read_thermal_zone()
 	{
 		// /dev/power/acpi_thermal/0 ...
-		// Output format is binary struct? Or text?
-		// Assuming standard driver output might be text or simple value if using cat
-		// But for now just return availability
 		$temp = -1;
 		if(is_dir('/dev/power/acpi_thermal') && ($t = scandir('/dev/power/acpi_thermal')))
 		{
-			// TODO: Implement actual reading if possible.
-			// For now, we can't reliably read binary structs from PHP without knowing the layout.
-			// But if users report `cat` works, we could try.
-			/*
 			foreach($t as $zone)
 			{
 				if($zone != '.' && $zone != '..')
 				{
-					$out = shell_exec('cat /dev/power/acpi_thermal/' . $zone . ' 2>/dev/null');
-					// parsing logic needed
+					$files = array('temperature', 'temp', 'thermal_zone/temp');
+					foreach($files as $f)
+					{
+						$path = '/dev/power/acpi_thermal/' . $zone . '/' . $f;
+						if(is_file($path))
+						{
+							$content = trim(file_get_contents($path));
+							if(is_numeric($content))
+							{
+								if($content > 2000)
+								{
+									// Deci-Kelvin
+									$content = ($content / 10) - 273.15;
+								}
+								else if($content > 1000)
+								{
+									// Milli-Celsius
+									$content = $content / 1000;
+								}
+								$temp = $content;
+								break 2;
+							}
+						}
+					}
 				}
 			}
-			*/
 		}
 		return $temp;
 	}
