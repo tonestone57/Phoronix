@@ -123,6 +123,11 @@ class phodevi_haiku_parser
 			$trimmed_line = trim($line);
 			if(empty($trimmed_line)) continue;
 
+			// The 'device' line for the class starts at the beginning of the line (no indentation)
+			// e.g. "device Network controller..."
+			// The inner 'device' line for details is indented
+			// e.g. "  device 100e:..."
+
 			if(strpos($line, 'device ') === 0)
 			{
 				if(!empty($current_device))
