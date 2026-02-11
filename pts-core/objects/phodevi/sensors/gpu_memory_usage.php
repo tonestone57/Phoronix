@@ -30,6 +30,11 @@ class gpu_memory_usage extends phodevi_sensor
 	{
 		$mem_usage = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
+
 		if(($nvidia_smi = pts_client::executable_in_path('nvidia-smi')))
 		{
 			$smi_output = shell_exec(escapeshellarg($nvidia_smi) . ' -q -d MEMORY');

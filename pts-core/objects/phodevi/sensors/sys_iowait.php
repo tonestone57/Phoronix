@@ -31,6 +31,10 @@ class sys_iowait extends phodevi_sensor
 	{
 		$iowait = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			$iowait = $this->sys_iowait_linux();

@@ -31,7 +31,11 @@ class gpu_fanspeed extends phodevi_sensor
 		// Report graphics processor fan speed as a percent
 		$fan_speed = -1;
 
-		if(phodevi::is_nvidia_graphics())
+		if(phodevi::is_haiku())
+		{
+			$fan_speed = -1;
+		}
+		else if(phodevi::is_nvidia_graphics())
 		{
 			// NVIDIA fan speed reading support in NVIDIA 190.xx and newer
 			// TODO: support for multiple fans, also for reading GPUFanTarget to get appropriate fan

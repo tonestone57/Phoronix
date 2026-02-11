@@ -31,7 +31,11 @@ class gpu_temp extends phodevi_sensor
 		// Report graphics processor temperature
 		$temp_c = -1;
 
-		if(phodevi::is_nvidia_graphics())
+		if(phodevi::is_haiku())
+		{
+			$temp_c = -1;
+		}
+		else if(phodevi::is_nvidia_graphics())
 		{
 			$temp_c = phodevi_parser::read_nvidia_extension('GPUCoreTemp');
 		}

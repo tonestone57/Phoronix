@@ -58,6 +58,11 @@ class sys_power extends phodevi_sensor
 	}
 	public function support_check()
 	{
+		if(phodevi::is_haiku())
+		{
+			// TODO: Implement Haiku power monitoring
+			return false;
+		}
 		if(phodevi::is_windows())
 		{
 			if(self::windows_wmi_battery_status_discharge() > 0)
