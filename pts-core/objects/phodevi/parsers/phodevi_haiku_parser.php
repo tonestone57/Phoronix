@@ -25,7 +25,22 @@ class phodevi_haiku_parser
 {
 	public static function read_sysinfo($info, $sysinfo_output = null)
 	{
-		$sysinfo = $sysinfo_output == null ? shell_exec('sysinfo 2>&1') : $sysinfo_output;
+		static $sysinfo_cache = null;
+
+		if($sysinfo_output != null)
+		{
+			$sysinfo = $sysinfo_output;
+		}
+		else
+		{
+			if($sysinfo_cache == null)
+			{
+				$sysinfo_cache = shell_exec('sysinfo 2>&1');
+			}
+
+			$sysinfo = $sysinfo_cache;
+		}
+
 		$return = false;
 
 		switch($info)
