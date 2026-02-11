@@ -104,6 +104,18 @@ class phodevi_haiku_parser
 					$return = $matches[1];
 				}
 				break;
+			case 'kernel_release':
+				if(preg_match('/Kernel: Haiku (.*) \(/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
+			case 'kernel_date':
+				if(preg_match('/Kernel: .* \((.*)\)/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				break;
 			case 'bios_vendor':
 				// Match Vendor under Bios Information section
 				if(preg_match('/Bios Information.*?Vendor: ([^\n]*)/s', str_replace("\n  ", "\n", $sysinfo), $matches))

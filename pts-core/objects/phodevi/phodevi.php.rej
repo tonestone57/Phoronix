@@ -1,0 +1,13 @@
+diff a/pts-core/objects/phodevi/phodevi.php b/pts-core/objects/phodevi/phodevi.php	(rejected hunks)
+@@ -609,6 +609,11 @@ public static function initial_setup()
+			self::$operating_system = 'Unknown';
+		}
+
++		if(self::$operating_system == 'Haiku')
++		{
++			self::$operating_systems['haiku'] = true;
++		}
++
+		self::load_sensors();
+	}
+	private static function detect_graphics()
