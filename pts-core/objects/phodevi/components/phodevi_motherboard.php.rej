@@ -1,0 +1,23 @@
+diff a/pts-core/objects/phodevi/components/phodevi_motherboard.php b/pts-core/objects/phodevi/components/phodevi_motherboard.php	(rejected hunks)
+@@ -589,6 +589,21 @@ public static function motherboard_string()
+				$info = phodevi_windows_parser::get_wmi_object('Win32_MotherboardDevice', 'Name');
+			}
+		}
++		else if(phodevi::is_haiku())
++		{
++			$vendor = phodevi_haiku_parser::read_sysinfo('system_vendor');
++			$product = phodevi_haiku_parser::read_sysinfo('system_product');
++			$version = phodevi_haiku_parser::read_sysinfo('system_version');
++
++			if(!empty($vendor) && !empty($product))
++			{
++				$info = $vendor . ' ' . $product;
++				if(!empty($version))
++				{
++					$info .= ' ' . $version;
++				}
++			}
++		}
+
+		if((strpos($info, 'Mac ') !== false || strpos($info, 'MacBook') !== false) && strpos($info, 'Apple') === false)
+		{
