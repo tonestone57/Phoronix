@@ -2153,18 +2153,7 @@ class phodevi_system extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// Basic existence check for now as we don't parse the binary/text structure yet
-			if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
-			{
-				foreach($b as $battery)
-				{
-					if($battery != '.' && $battery != '..')
-					{
-						// Just report presence for now
-						$batteries[] = 'Haiku Battery';
-					}
-				}
-			}
+			$batteries = phodevi_haiku_parser::read_battery_status();
 		}
 
 		return implode(' + ', $batteries);
