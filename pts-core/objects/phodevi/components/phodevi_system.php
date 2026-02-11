@@ -152,6 +152,11 @@ class phodevi_system extends phodevi_device_interface
 		// Returns the vendor identifier used with the External Dependencies and other distro-specific features
 		$vendor = phodevi::is_linux() ? phodevi_linux_parser::read_lsb_distributor_id() : false;
 
+		if(phodevi::is_haiku())
+		{
+			$vendor = 'Haiku';
+		}
+
 		if(!$vendor)
 		{
 			$vendor = phodevi::read_property('system', 'operating-system');
@@ -1124,6 +1129,10 @@ class phodevi_system extends phodevi_device_interface
 		{
 			$os_version = phodevi_windows_parser::get_wmi_object('win32_operatingsystem', 'BuildNumber');
 		}
+		else if(phodevi::is_haiku())
+		{
+			$os_version = php_uname('v');
+		}
 		else
 		{
 			$os_version = php_uname('r');
@@ -1175,6 +1184,10 @@ class phodevi_system extends phodevi_device_interface
 		else if(phodevi::is_hurd())
 		{
 			$vendor = php_uname('v');
+		}
+		else if(phodevi::is_haiku())
+		{
+			$vendor = 'Haiku';
 		}
 		else
 		{
@@ -1280,7 +1293,11 @@ class phodevi_system extends phodevi_device_interface
 			{
 				$os = trim(exec('ver'));
 			}
-		}	
+		}
+		else if(phodevi::is_haiku())
+		{
+			$os = 'Haiku ' . phodevi::read_property('system', 'os-version');
+		}
 		if(($break_point = strpos($os, '(')) > 0)
 		{
 			$os = substr($os, 0, $break_point);
