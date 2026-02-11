@@ -73,6 +73,11 @@ class phodevi_memory extends phodevi_device_interface
 			$mem_type = null;
 			$mem_speed = is_numeric($clock_speed) ? $clock_speed . 'MHz' : null;
 		}
+		else if(phodevi::is_haiku())
+		{
+			// TODO: Implement Haiku Memory string detection
+			// $mem_size = phodevi_haiku_parser::read_sysinfo('mem_size');
+		}
 		else if(phodevi::is_linux())
 		{
 			$mem_size = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Size', false, array('Not Installed', 'No Module Installed', 'Undefined'));
@@ -319,6 +324,11 @@ class phodevi_memory extends phodevi_device_interface
 			{
 				$info = null;
 			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			// TODO: Implement Haiku Memory capacity detection
+			// $info = phodevi_haiku_parser::read_sysinfo('mem_capacity');
 		}
 		else
 		{

@@ -48,7 +48,7 @@ class pts_types
 	}
 	public static function operating_systems()
 	{
-		return array(array('Linux'), array('Solaris', 'Sun'), array('BSD', 'DragonFly'), array('MacOSX', 'Darwin'), array('Windows'), array('Hurd', 'GNU'));
+		return array(array('Linux'), array('Solaris', 'Sun'), array('BSD', 'DragonFly'), array('MacOSX', 'Darwin'), array('Windows'), array('Hurd', 'GNU'), array('Haiku'));
 	}
 	public static function known_architectures()
 	{
@@ -56,7 +56,7 @@ class pts_types
 	}
 	public static function known_operating_systems()
 	{
-		return array('Linux', 'Windows', 'BSD', 'MacOSX', 'Solaris', '');
+		return array('Linux', 'Windows', 'BSD', 'MacOSX', 'Solaris', 'Haiku', '');
 	}
 	public static function all_possible_external_dependencies()
 	{
