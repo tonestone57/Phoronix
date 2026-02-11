@@ -1,2 +1,2 @@
 #!/bin/sh
-pkgman install -y $*
+pkgman install -y "$@"

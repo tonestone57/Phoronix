@@ -31,11 +31,11 @@
 		</Package>
 		<Package>
 			<GenericName>sdl-development</GenericName>
-			<PossibleNames>libsdl</PossibleNames>
+			<PossibleNames>libsdl_devel</PossibleNames>
 		</Package>
 		<Package>
 			<GenericName>sdl2-development</GenericName>
-			<PossibleNames>libsdl2</PossibleNames>
+			<PossibleNames>libsdl2_devel</PossibleNames>
 		</Package>
 		<Package>
 			<GenericName>zlib-development</GenericName>
