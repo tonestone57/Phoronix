@@ -98,6 +98,10 @@ class cpu_usage extends phodevi_sensor
 		{
 			$percent = phodevi_windows_parser::get_wmi_object('Win32_processor', 'LoadPercentage');
 		}
+		else if(phodevi::is_haiku())
+		{
+			$percent = phodevi_haiku_parser::read_cpu_usage();
+		}
 
 		if(!isset($percent) || !is_numeric($percent) || $percent < 0 || $percent > 100)
 		{

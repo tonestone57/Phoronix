@@ -347,16 +347,25 @@ class phodevi_disk extends phodevi_device_interface
 
 					if(strpos($fs_dev, '/dev/disk/') === 0)
 					{
-						$fs_dev = basename($fs_dev);
-						if($fs_dev == 'raw')
+						// Try to get model from smartctl
+						$smart_info = phodevi_haiku_parser::read_smartctl_info($fs_dev);
+						if(!empty($smart_info['model']))
 						{
-							$fs_dev = basename(dirname($fs['filesystem'])); // e.g. /dev/disk/.../0/raw -> 0
-							if(is_numeric($fs_dev))
+							$fs_dev = $smart_info['model'];
+						}
+						else
+						{
+							$fs_dev = basename($fs_dev);
+							if($fs_dev == 'raw')
 							{
-								$parent = basename(dirname(dirname($fs['filesystem'])));
-								if($parent != 'disk')
+								$fs_dev = basename(dirname($fs['filesystem'])); // e.g. /dev/disk/.../0/raw -> 0
+								if(is_numeric($fs_dev))
 								{
-									$fs_dev = $parent; // e.g. virtio_block
+									$parent = basename(dirname(dirname($fs['filesystem'])));
+									if($parent != 'disk')
+									{
+										$fs_dev = $parent; // e.g. virtio_block
+									}
 								}
 							}
 						}

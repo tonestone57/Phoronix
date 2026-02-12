@@ -63,9 +63,9 @@ class phodevi_haiku_parser
 				}
 				break;
 			case 'cpu_features':
-				if(preg_match('/Features: (.*)/', $sysinfo, $matches))
+				if(preg_match('/Features: (?:0x[0-9a-fA-F]+\.\s*)?(.*)/', $sysinfo, $matches))
 				{
-					$return = $matches[1];
+					$return = strtolower($matches[1]);
 				}
 				break;
 			case 'system_vendor':
@@ -132,9 +132,21 @@ class phodevi_haiku_parser
 
 	public static function read_listdev($listdev_output = null)
 	{
-		// Hardware sensor monitoring is not yet supported on Haiku as there isn't a standardized command-line interface for it yet.
+		static $listdev_cache = null;
 
-		$listdev = $listdev_output == null ? shell_exec('listdev 2>&1') : $listdev_output;
+		if($listdev_output != null)
+		{
+			$listdev = $listdev_output;
+		}
+		else
+		{
+			if($listdev_cache == null)
+			{
+				$listdev_cache = shell_exec('listdev 2>&1');
+			}
+			$listdev = $listdev_cache;
+		}
+
 		$devices = array();
 
 		// Basic parsing of listdev output
@@ -196,6 +208,60 @@ class phodevi_haiku_parser
 		}
 
 		return $devices;
+	}
+
+	public static function read_memory_usage()
+	{
+		// Parsing sysinfo -mem to get usage
+		// 32768 MB total, 25000 MB used (76%)
+		$sysinfo_mem = shell_exec('sysinfo -mem 2>&1');
+		if(preg_match('/([0-9]+) MB used/', $sysinfo_mem, $matches))
+		{
+			return $matches[1];
+		}
+		return -1;
+	}
+
+	public static function read_cpu_usage()
+	{
+		// Use top -n 1
+		// Try parsing Haiku top output, which might differ from Linux
+		// " 2.8% cpu" or similar?
+		// Actually typical Haiku top output shows:
+		// Load average: ...
+		// ...
+		// 91.7% idle
+		$top = shell_exec('top -n 1 2>&1');
+		if(preg_match('/([0-9\.]+)% idle/', $top, $matches))
+		{
+			$idle = $matches[1];
+			return 100 - $idle;
+		}
+		// Fallback to standard Linux top format just in case
+		else if(preg_match('/([0-9\.]+) id/', $top, $matches))
+		{
+			$idle = $matches[1];
+			return 100 - $idle;
+		}
+
+		return -1;
+	}
+
+	public static function read_swap_usage()
+	{
+		// Try to find swap usage
+		// Currently vm_stat or sysinfo don't cleanly expose used swap in MB
+		// But let's check vm_stat output format again or try top
+		// Top output: MiB Swap: 3784.0 total, 3756.0 free, 28.0 used.
+		$top = shell_exec('top -n 1 2>&1');
+		if(preg_match('/Swap:\s+([0-9\.]+)\s+total,\s+([0-9\.]+)\s+free,\s+([0-9\.]+)\s+used/', $top, $matches))
+		{
+			return $matches[3]; // Used
+		}
+		// Haiku might report it differently in some versions or depending on top implementation
+		// Try sysinfo again if we can find swap there (unlikely based on previous checks but good to note)
+
+		return -1;
 	}
 
 	public static function read_disk_info($df_output = null)
@@ -298,6 +364,88 @@ class phodevi_haiku_parser
 			}
 		}
 		return $temp;
+	}
+
+	public static function read_uptime()
+	{
+		// Haiku uptime format: "uptime: 1d 2h 30m 10s" or "uptime: 2h 30m 10s"
+		$uptime_counter = 0;
+		if(($uptime_cmd = pts_client::executable_in_path('uptime')) != false)
+		{
+			$uptime_output = shell_exec($uptime_cmd . ' 2>&1');
+			if(preg_match('/uptime:\s+(.*)/', $uptime_output, $matches))
+			{
+				$parts = explode(' ', $matches[1]);
+				foreach($parts as $part)
+				{
+					$val = intval($part);
+					if(strpos($part, 'd') !== false)
+					{
+						$uptime_counter += $val * 86400;
+					}
+					elseif(strpos($part, 'h') !== false)
+					{
+						$uptime_counter += $val * 3600;
+					}
+					elseif(strpos($part, 'm') !== false)
+					{
+						$uptime_counter += $val * 60;
+					}
+					elseif(strpos($part, 's') !== false)
+					{
+						$uptime_counter += $val;
+					}
+				}
+			}
+		}
+		return $uptime_counter;
+	}
+
+	public static function read_smartctl_info($device_path)
+	{
+		// Returns array with 'model' and 'serial' if found
+		$info = array();
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -i ' . $device_path . ' 2>&1');
+			if(preg_match('/Device Model:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+			else if(preg_match('/Product:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+			else if(preg_match('/Model Number:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+
+			if(preg_match('/Serial Number:\s+(.*)/', $output, $matches))
+			{
+				$info['serial'] = trim($matches[1]);
+			}
+		}
+		return $info;
+	}
+
+	public static function read_smartctl_temp($device_path)
+	{
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -A ' . $device_path . ' 2>&1');
+			// 194 Temperature_Celsius     0x0022   100   100   000    Old_age   Always       -       34
+			if(preg_match('/Temperature_Celsius.*\s([0-9]+)$/m', $output, $matches))
+			{
+				return $matches[1];
+			}
+			// 190 Airflow_Temperature_Cel 0x0022   066   055   045    Old_age   Always       -       34 (Min/Max 25/45)
+			if(preg_match('/Airflow_Temperature_Cel.*\s([0-9]+) \(Min/', $output, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return -1;
 	}
 }
 

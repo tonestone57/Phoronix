@@ -49,13 +49,7 @@ class memory_usage extends phodevi_sensor
 		}
 		else if(phodevi::is_haiku())
 		{
-			// Parsing sysinfo -mem to get usage
-			// 32768 MB total, 25000 MB used (76%)
-			$sysinfo_mem = shell_exec('sysinfo -mem 2>&1');
-			if(preg_match('/([0-9]+) MB used/', $sysinfo_mem, $matches))
-			{
-				return $matches[1];
-			}
+			return phodevi_haiku_parser::read_memory_usage();
 		}
 	}
 	private function mem_usage_linux()

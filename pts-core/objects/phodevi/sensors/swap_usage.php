@@ -38,26 +38,7 @@ class swap_usage extends phodevi_sensor
 		}
 		else if(phodevi::is_haiku())
 		{
-			$vm_stat = shell_exec('vm_stat 2>&1');
-			if(preg_match('/Swap:\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)/', $vm_stat, $matches))
-			{
-				$total = $matches[1];
-				// $free = $matches[3];
-				// Haiku vm_stat format? usually:
-				// Swap:   4194304   4194304         0
-				// Total, Free, Used? Or Total, Configured, Free?
-				// Assuming standard vm_stat or similar output.
-				// Actually Haiku `vm_stat` outputs:
-				// kmax 262144, kmin 16384, kfree 200000...
-				// `sysinfo -mem` is safer:
-				// 32768 MB total, 25000 MB used (76%)
-				// It doesn't show swap easily.
-				// Let's stick to -1 until we know better, or try parsing `vm_stat` if it works.
-				// Actually, `sysinfo` output earlier didn't show swap.
-				// Let's check `top`?
-				// For now, return -1 is safer than guessing.
-				$swap_usage = -1;
-			}
+			$swap_usage = phodevi_haiku_parser::read_swap_usage();
 		}
 
 		return $swap_usage;
