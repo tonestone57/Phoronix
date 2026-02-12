@@ -73,7 +73,7 @@ class phoromatic_build_suite implements pts_webui_interface
 							foreach($opts as $opt)
 							{
 								$t = explode('::', $opt);
-								$a[] = $t[1];
+								$a[] = pts_strings::keep_in_string($t[1], pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DASH | pts_strings::CHAR_DECIMAL | pts_strings::CHAR_SPACE | pts_strings::CHAR_UNDERSCORE | pts_strings::CHAR_COMMA | pts_strings::CHAR_AT | pts_strings::CHAR_COLON | pts_strings::CHAR_SLASH | pts_strings::CHAR_PLUS | pts_strings::CHAR_EQUAL);
 								$d[] = $t[0];
 							}
 							$args[] = $a;
@@ -81,7 +81,7 @@ class phoromatic_build_suite implements pts_webui_interface
 						}
 						else
 						{
-							$args[] = array($v);
+							$args[] = array(pts_strings::keep_in_string($v, pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DASH | pts_strings::CHAR_DECIMAL | pts_strings::CHAR_SPACE | pts_strings::CHAR_UNDERSCORE | pts_strings::CHAR_COMMA | pts_strings::CHAR_AT | pts_strings::CHAR_COLON | pts_strings::CHAR_SLASH | pts_strings::CHAR_PLUS | pts_strings::CHAR_EQUAL));
 							$args_name[] = array($_POST[$i . '_selected']);
 						}
 					}
