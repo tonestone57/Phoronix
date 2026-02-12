@@ -731,46 +731,78 @@ class phodevi extends phodevi_base
 		{
 			$uptime_counter = 0;
 			$uptime_output = shell_exec($uptime_cmd . ' 2>&1');
-			$uptime_output = substr($uptime_output, strpos($uptime_output, ' up') + 3);
-			$uptime_output = substr($uptime_output, 0, strpos($uptime_output, ' user'));
-			$uptime_output = substr($uptime_output, 0, strrpos($uptime_output, ',')) . ' ';
 
-			if(($day_end_pos = strpos($uptime_output, ' day')) !== false)
+			if(phodevi::is_haiku())
 			{
-				$day_output = substr($uptime_output, 0, $day_end_pos);
-				$day_output = substr($day_output, strrpos($day_output, ' ') + 1);
-
-				if(is_numeric($day_output))
+				// Haiku uptime format: "uptime: 1d 2h 30m 10s" or "uptime: 2h 30m 10s"
+				if(preg_match('/uptime:\s+(.*)/', $uptime_output, $matches))
 				{
-					$uptime_counter += $day_output * 86400;
+					$parts = explode(' ', $matches[1]);
+					foreach($parts as $part)
+					{
+						$val = intval($part);
+						if(strpos($part, 'd') !== false)
+						{
+							$uptime_counter += $val * 86400;
+						}
+						elseif(strpos($part, 'h') !== false)
+						{
+							$uptime_counter += $val * 3600;
+						}
+						elseif(strpos($part, 'm') !== false)
+						{
+							$uptime_counter += $val * 60;
+						}
+						elseif(strpos($part, 's') !== false)
+						{
+							$uptime_counter += $val;
+						}
+					}
 				}
 			}
-
-			if(($mins_end_pos = strpos($uptime_output, ' mins')) !== false)
+			else
 			{
-				$mins_output = substr($uptime_output, 0, $mins_end_pos);
-				$mins_output = substr($mins_output, strrpos($mins_output, ' ') + 1);
+				$uptime_output = substr($uptime_output, strpos($uptime_output, ' up') + 3);
+				$uptime_output = substr($uptime_output, 0, strpos($uptime_output, ' user'));
+				$uptime_output = substr($uptime_output, 0, strrpos($uptime_output, ',')) . ' ';
 
-				if(is_numeric($mins_output))
+				if(($day_end_pos = strpos($uptime_output, ' day')) !== false)
 				{
-					$uptime_counter += $mins_output * 60;
+					$day_output = substr($uptime_output, 0, $day_end_pos);
+					$day_output = substr($day_output, strrpos($day_output, ' ') + 1);
+
+					if(is_numeric($day_output))
+					{
+						$uptime_counter += $day_output * 86400;
+					}
 				}
-			}
 
-			if(($time_split_pos = strpos($uptime_output, ':')) !== false)
-			{
-				$hours_output = substr($uptime_output, 0, $time_split_pos);
-				$hours_output = substr($hours_output, strrpos($hours_output, ' ') + 1);
-				$mins_output = substr($uptime_output, $time_split_pos + 1);
-				$mins_output = substr($mins_output, 0, strpos($mins_output, ' '));
-
-				if(is_numeric($hours_output))
+				if(($mins_end_pos = strpos($uptime_output, ' mins')) !== false)
 				{
-					$uptime_counter += $hours_output * 3600;
+					$mins_output = substr($uptime_output, 0, $mins_end_pos);
+					$mins_output = substr($mins_output, strrpos($mins_output, ' ') + 1);
+
+					if(is_numeric($mins_output))
+					{
+						$uptime_counter += $mins_output * 60;
+					}
 				}
-				if(is_numeric($mins_output))
+
+				if(($time_split_pos = strpos($uptime_output, ':')) !== false)
 				{
-					$uptime_counter += $mins_output * 60;
+					$hours_output = substr($uptime_output, 0, $time_split_pos);
+					$hours_output = substr($hours_output, strrpos($hours_output, ' ') + 1);
+					$mins_output = substr($uptime_output, $time_split_pos + 1);
+					$mins_output = substr($mins_output, 0, strpos($mins_output, ' '));
+
+					if(is_numeric($hours_output))
+					{
+						$uptime_counter += $hours_output * 3600;
+					}
+					if(is_numeric($mins_output))
+					{
+						$uptime_counter += $mins_output * 60;
+					}
 				}
 			}
 

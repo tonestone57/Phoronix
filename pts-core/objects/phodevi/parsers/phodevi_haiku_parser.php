@@ -210,6 +210,33 @@ class phodevi_haiku_parser
 		return -1;
 	}
 
+	public static function read_cpu_usage()
+	{
+		// Use top -n 1
+		$top = shell_exec('top -n 1 2>&1');
+		// %Cpu(s): 2.8 us, 5.6 sy, 0.0 ni, 91.7 id, 0.0 wa, 0.0 hi, 0.0 si, 0.0 st
+		if(preg_match('/([0-9\.]+) id/', $top, $matches))
+		{
+			$idle = $matches[1];
+			return 100 - $idle;
+		}
+		return -1;
+	}
+
+	public static function read_swap_usage()
+	{
+		// Try to find swap usage
+		// Currently vm_stat or sysinfo don't cleanly expose used swap in MB
+		// But let's check vm_stat output format again or try top
+		// Top output: MiB Swap: 3784.0 total, 3756.0 free, 28.0 used.
+		$top = shell_exec('top -n 1 2>&1');
+		if(preg_match('/Swap:\s+([0-9\.]+)\s+total,\s+([0-9\.]+)\s+free,\s+([0-9\.]+)\s+used/', $top, $matches))
+		{
+			return $matches[3]; // Used
+		}
+		return -1;
+	}
+
 	public static function read_disk_info($df_output = null)
 	{
 		// Use df
