@@ -197,6 +197,14 @@ class phodevi_monitor extends phodevi_device_interface
 				$monitor_count = 1;
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			// Assume 1 if EDID is present
+			if(pts_client::executable_in_path('get_edid') && !empty(shell_exec('get_edid 2>/dev/null')))
+			{
+				$monitor_count = 1;
+			}
+		}
 
 		return $monitor_count;
 	}

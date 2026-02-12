@@ -245,14 +245,13 @@ class phodevi_haiku_parser
 	public static function read_cpu_usage()
 	{
 		// Use top -n 1
-		// Try parsing Haiku top output, which might differ from Linux
-		// " 2.8% cpu" or similar?
-		// Actually typical Haiku top output shows:
-		// Load average: ...
-		// ...
-		// 91.7% idle
 		$top = shell_exec('top -n 1 2>&1');
-		if(preg_match('/([0-9\.]+)\s*%\s*idle/i', $top, $matches))
+		// CPU:  total:  8.3%   user:  1.6%   kernel:  6.7%   idle: 91.7%
+		if(preg_match('/total:\s*([0-9\.]+)\s*%/', $top, $matches))
+		{
+			return $matches[1];
+		}
+		else if(preg_match('/([0-9\.]+)\s*%\s*idle/i', $top, $matches))
 		{
 			$idle = $matches[1];
 			return 100 - $idle;
@@ -269,17 +268,18 @@ class phodevi_haiku_parser
 
 	public static function read_swap_usage()
 	{
-		// Try to find swap usage
-		// Currently vm_stat or sysinfo don't cleanly expose used swap in MB
-		// But let's check vm_stat output format again or try top
 		// Top output: MiB Swap: 3784.0 total, 3756.0 free, 28.0 used.
 		$top = shell_exec('top -n 1 2>&1');
-		if(preg_match('/Swap:.*?\s+([0-9\.]+)\s+used/i', $top, $matches))
+		if(preg_match('/(MiB|KiB|GiB|MB|KB|GB)?\s*Swap:.*?\s+([0-9\.]+)\s+used/i', $top, $matches))
 		{
-			return $matches[1]; // Used
+			$unit = strtoupper($matches[1]);
+			$val = $matches[2];
+
+			if($unit == 'GIB' || $unit == 'GB') $val *= 1024;
+			else if($unit == 'KIB' || $unit == 'KB') $val /= 1024;
+
+			return round($val);
 		}
-		// Haiku might report it differently in some versions or depending on top implementation
-		// Try sysinfo again if we can find swap there (unlikely based on previous checks but good to note)
 
 		return -1;
 	}
@@ -330,12 +330,22 @@ class phodevi_haiku_parser
 					if(is_file('/dev/power/acpi_battery/' . $battery . '/model'))
 					{
 						$model = trim(file_get_contents('/dev/power/acpi_battery/' . $battery . '/model'));
-						$batteries[] = 'ACPI Battery ' . $battery . ' (' . $model . ')';
+						$info = 'ACPI Battery ' . $battery . ' (' . $model . ')';
 					}
 					else
 					{
-						$batteries[] = 'ACPI Battery ' . $battery;
+						$info = 'ACPI Battery ' . $battery;
 					}
+
+					if(is_file('/dev/power/acpi_battery/' . $battery . '/capacity'))
+					{
+						$capacity = trim(file_get_contents('/dev/power/acpi_battery/' . $battery . '/capacity'));
+						if(is_numeric($capacity))
+						{
+							$info .= ' ' . $capacity . '%';
+						}
+					}
+					$batteries[] = $info;
 				}
 			}
 		}
@@ -363,6 +373,11 @@ class phodevi_haiku_parser
 						if(is_file($path))
 						{
 							$content = trim(file_get_contents($path));
+							if(!is_numeric($content) && preg_match('/([0-9]+)/', $content, $m))
+							{
+								$content = $m[1];
+							}
+
 							if(is_numeric($content))
 							{
 								if($content > 10000)
@@ -429,6 +444,10 @@ class phodevi_haiku_parser
 		{
 			$output = shell_exec('smartctl -i ' . $device_path . ' 2>&1');
 			if(preg_match('/Device Model:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+			else if(preg_match('/Model Family:\s+(.*)/', $output, $matches))
 			{
 				$info['model'] = trim($matches[1]);
 			}

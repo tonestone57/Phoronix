@@ -107,14 +107,18 @@ class phodevi_audio extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
+			$audio_devices = array();
 			$listdev = phodevi_haiku_parser::read_listdev();
 			foreach($listdev as $device)
 			{
-				if(stripos($device['class'], 'Multimedia audio controller') !== false)
+				if(stripos($device['class'], 'Multimedia audio controller') !== false || stripos($device['class'], 'Audio device') !== false)
 				{
-					$audio = $device['device'];
-					break;
+					$audio_devices[] = $device['device'];
 				}
+			}
+			if(!empty($audio_devices))
+			{
+				$audio = implode(' + ', array_unique($audio_devices));
 			}
 		}
 

@@ -507,6 +507,27 @@ class phodevi_gpu extends phodevi_device_interface
 		{
 			$resolution = array(phodevi_windows_parser::get_wmi_object('Win32_VideoController', 'CurrentHorizontalResolution'), phodevi_windows_parser::get_wmi_object('Win32_VideoController', 'CurrentVerticalResolution'));
 		}
+		else if(phodevi::is_haiku())
+		{
+			if(pts_client::executable_in_path('get_edid'))
+			{
+				$edid = shell_exec('get_edid 2>/dev/null');
+				if(strlen($edid) >= 128)
+				{
+					// Parse Detailed Timing Descriptor (first one is preferred mode)
+					// Offset 54 (0x36)
+					$dtd = substr($edid, 54, 18);
+					// Check if it is a valid DTD (pixel clock non-zero)
+					$pixel_clock = ord($dtd[0]) + (ord($dtd[1]) << 8);
+					if($pixel_clock > 0)
+					{
+						$h_active = ord($dtd[2]) + ((ord($dtd[4]) & 0xF0) << 4);
+						$v_active = ord($dtd[5]) + ((ord($dtd[7]) & 0xF0) << 4);
+						$resolution = array($h_active, $v_active);
+					}
+				}
+			}
+		}
 
 		return $resolution == false ? array(-1, -1) : $resolution;
 	}
@@ -576,6 +597,63 @@ class phodevi_gpu extends phodevi_device_interface
 						{
 							// Don't repeat modes
 							array_push($available_modes, $m);
+						}
+					}
+				}
+			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			if(pts_client::executable_in_path('get_edid'))
+			{
+				$edid = shell_exec('get_edid 2>/dev/null');
+				if(strlen($edid) >= 128)
+				{
+					// Standard Timings (bytes 38-53, 8 timings)
+					for($i = 0; $i < 8; $i++)
+					{
+						$offset = 38 + ($i * 2);
+						$b1 = ord($edid[$offset]);
+						$b2 = ord($edid[$offset + 1]);
+
+						if($b1 == 1 && $b2 == 1) continue; // Unused
+
+						$h_active = ($b1 + 31) * 8;
+						$aspect_ratio_code = ($b2 >> 6) & 0x03;
+						$v_active = 0;
+						switch($aspect_ratio_code)
+						{
+							case 0: $v_active = ($h_active * 10) / 16; break; // 16:10
+							case 1: $v_active = ($h_active * 3) / 4; break;   // 4:3
+							case 2: $v_active = ($h_active * 4) / 5; break;   // 5:4
+							case 3: $v_active = ($h_active * 9) / 16; break;  // 16:9
+						}
+
+						if($v_active > 0)
+						{
+							$m = array($h_active, $v_active);
+							if(!in_array($m, $available_modes))
+							{
+								$available_modes[] = $m;
+							}
+						}
+					}
+
+					// Detailed Timing Descriptors (4 blocks, start 54)
+					for($i = 0; $i < 4; $i++)
+					{
+						$offset = 54 + ($i * 18);
+						$dtd = substr($edid, $offset, 18);
+						$pixel_clock = ord($dtd[0]) + (ord($dtd[1]) << 8);
+						if($pixel_clock > 0)
+						{
+							$h_active = ord($dtd[2]) + ((ord($dtd[4]) & 0xF0) << 4);
+							$v_active = ord($dtd[5]) + ((ord($dtd[7]) & 0xF0) << 4);
+							$m = array($h_active, $v_active);
+							if(!in_array($m, $available_modes))
+							{
+								$available_modes[] = $m;
+							}
 						}
 					}
 				}
