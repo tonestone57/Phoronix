@@ -30,6 +30,10 @@ class sys_fanspeed extends phodevi_sensor
 	{
 		$fan_speed = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			$fan_speed = $this->sys_fanspeed_linux();

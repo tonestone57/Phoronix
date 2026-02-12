@@ -46,6 +46,11 @@ class phodevi_gpu extends phodevi_device_interface
 	}
 	public static function bar1_visible_vram()
 	{
+		if(phodevi::is_haiku())
+		{
+			return null;
+		}
+
 		$rebar_size = '';
 		if(phodevi::is_nvidia_graphics())
 		{
@@ -79,6 +84,11 @@ class phodevi_gpu extends phodevi_device_interface
 	}
 	public static function vbios_version()
 	{
+		if(phodevi::is_haiku())
+		{
+			return null;
+		}
+
 		$vbios_version = '';
 		if(phodevi::is_nvidia_graphics())
 		{
@@ -134,21 +144,6 @@ class phodevi_gpu extends phodevi_device_interface
 				if(is_numeric(substr($pnputil, 0, 4)))
 				{
 					$device_id = substr($pnputil, 0, 4);
-				}
-			}
-		}
-		else if(phodevi::is_haiku())
-		{
-			$listdev = phodevi_haiku_parser::read_listdev();
-			foreach($listdev as $device)
-			{
-				if(stripos($device['class'], 'Display controller') !== false || stripos($device['class'], 'VGA') !== false)
-				{
-					if(isset($device['device_id']))
-					{
-						$device_id = $device['device_id'];
-					}
-					break;
 				}
 			}
 		}

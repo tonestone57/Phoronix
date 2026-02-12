@@ -28,6 +28,11 @@ class ambient_temp extends phodevi_sensor
 
 	public function read_sensor()
 	{
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
+
 		if(pts_client::executable_in_path('temperv14'))
 		{
 			$temperv14 = trim(shell_exec('temperv14 -c 2>&1'));

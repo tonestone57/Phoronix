@@ -66,6 +66,10 @@ class sys_voltage extends phodevi_sensor
 	}
 	public static function get_supported_devices()
 	{
+		if(phodevi::is_haiku())
+		{
+			return NULL;
+		}
 		if(phodevi::is_linux())
 		{
 			$supported = array();
@@ -93,6 +97,10 @@ class sys_voltage extends phodevi_sensor
 	{
 		$sensor = -1;
 		
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			if($this->voltage_to_monitor == '12v')
