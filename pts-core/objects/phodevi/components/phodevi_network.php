@@ -54,6 +54,19 @@ class phodevi_network extends phodevi_device_interface
 			}
 		}
 
+		if(empty($dev) && phodevi::is_haiku() && ($route = pts_client::executable_in_path('route')))
+		{
+			$out = shell_exec($route . ' 2>&1');
+			$lines = explode("\n", $out);
+			foreach ($lines as $line) {
+				$parts = preg_split('/\s+/', trim($line));
+				if (isset($parts[0]) && ($parts[0] == 'default' || $parts[0] == '0.0.0.0')) {
+					$dev = array_pop($parts);
+					return $dev;
+				}
+			}
+		}
+
 		// we grab the last field of the `netstat -nr` output, betting on *bsd not expiring it's default route
 		if(empty($dev) && $netstat = pts_client::executable_in_path('netstat')) {
 			$out = shell_exec("$netstat -rn 2>&1");
@@ -218,8 +231,14 @@ class phodevi_network extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku() && ($ifconfig = pts_client::executable_in_path('ifconfig')))
 		{
-			$ifconfig = shell_exec($ifconfig . ' 2>&1');
-			if(preg_match('/hardware address:\s*([0-9a-fA-F:]+)/', $ifconfig, $matches))
+			$interface = phodevi::read_property('network', 'active-network-interface');
+			$cmd = $ifconfig;
+			if ($interface) {
+				$cmd .= ' ' . $interface;
+			}
+			$ifconfig_out = shell_exec($cmd . ' 2>&1');
+
+			if(preg_match('/hardware address:\s*([0-9a-fA-F:]+)/', $ifconfig_out, $matches))
 			{
 				$mac = $matches[1];
 			}

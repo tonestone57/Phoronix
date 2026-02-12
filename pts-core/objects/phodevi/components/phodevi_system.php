@@ -431,6 +431,17 @@ class phodevi_system extends phodevi_device_interface
 				}
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			if(pts_client::executable_in_path('mount'))
+			{
+				$mount = shell_exec('mount 2>&1');
+				if(preg_match('# on / type (.*?) \(#', $mount, $matches))
+				{
+					$fs = $matches[1];
+				}
+			}
+		}
 		else if(phodevi::is_windows())
 		{
 			// TODO could use better detection to verify if C: or the desired disk under test... but most of the time will be NTFS anyways

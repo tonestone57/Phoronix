@@ -150,6 +150,25 @@ class phodevi_motherboard extends phodevi_device_interface
 					));
 			}
 		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				if(stripos($device['class'], 'Serial bus controller') !== false || stripos($device['device'], 'USB') !== false)
+				{
+					// Format as USB device array
+					$usb_device = array(
+						'Class' => $device['class'],
+						'Vendor' => isset($device['vendor']) ? $device['vendor'] : 'Unknown',
+						'Device' => isset($device['device']) ? $device['device'] : 'Unknown',
+						'VendorID' => isset($device['vendor_id']) ? $device['vendor_id'] : null,
+						'DeviceID' => isset($device['device_id']) ? $device['device_id'] : null
+					);
+					$usb[] = $usb_device;
+				}
+			}
+		}
 
 		return $usb;
 	}
@@ -236,6 +255,36 @@ class phodevi_motherboard extends phodevi_device_interface
 				{
 					array_push($pci_devices, $formatted_section);
 				}
+			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			$listdev = phodevi_haiku_parser::read_listdev();
+			foreach($listdev as $device)
+			{
+				$formatted_device = array();
+				if(isset($device['vendor_id']))
+				{
+					$formatted_device['VendorID'] = '0x' . $device['vendor_id'];
+				}
+				if(isset($device['device_id']))
+				{
+					$formatted_device['DeviceID'] = '0x' . $device['device_id'];
+				}
+				if(isset($device['vendor']))
+				{
+					$formatted_device['Vendor'] = $device['vendor'];
+				}
+				if(isset($device['device']))
+				{
+					$formatted_device['Device'] = $device['device'];
+				}
+				if(isset($device['class']))
+				{
+					$formatted_device['Class'] = $device['class'];
+				}
+
+				$pci_devices[] = $formatted_device;
 			}
 		}
 
@@ -394,6 +443,29 @@ class phodevi_motherboard extends phodevi_device_interface
 				if($power_state == 'off-line')
 				{
 					$return_status = 'This computer was running on battery power';
+				}
+			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			if(is_dir('/dev/power/acpi_battery'))
+			{
+				foreach(scandir('/dev/power/acpi_battery') as $bat)
+				{
+					if($bat == '.' || $bat == '..') continue;
+
+					// Try to read state
+					$state_file = '/dev/power/acpi_battery/' . $bat . '/state';
+					if(is_file($state_file))
+					{
+						$state = file_get_contents($state_file);
+						// Assuming standard ACPI state strings or similar
+						if(stripos($state, 'discharging') !== false)
+						{
+							$return_status = 'This computer was running on battery power';
+							break;
+						}
+					}
 				}
 			}
 		}

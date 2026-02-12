@@ -126,5 +126,60 @@
 			<Title>JPEG</Title>
 			<PossibleNames>libjpeg_turbo_devel</PossibleNames>
 		</Package>
+		<Package>
+			<GenericName>dmidecode</GenericName>
+			<Title>dmidecode</Title>
+			<PossibleNames>dmidecode</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>yasm</GenericName>
+			<Title>Yasm</Title>
+			<PossibleNames>yasm</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>nasm</GenericName>
+			<Title>Nasm</Title>
+			<PossibleNames>nasm</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>mercurial</GenericName>
+			<Title>Mercurial</Title>
+			<PossibleNames>mercurial</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>subversion</GenericName>
+			<Title>Subversion</Title>
+			<PossibleNames>subversion</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>llvm</GenericName>
+			<Title>LLVM</Title>
+			<PossibleNames>llvm</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>clang</GenericName>
+			<Title>Clang</Title>
+			<PossibleNames>clang</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>ninja</GenericName>
+			<Title>Ninja</Title>
+			<PossibleNames>ninja</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>meson</GenericName>
+			<Title>Meson</Title>
+			<PossibleNames>meson</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>boost-development</GenericName>
+			<Title>Boost</Title>
+			<PossibleNames>boost_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>read_edid</GenericName>
+			<Title>read_edid</Title>
+			<PossibleNames>read_edid</PossibleNames>
+		</Package>
 	</ExternalDependencies>
 </PhoronixTestSuite>

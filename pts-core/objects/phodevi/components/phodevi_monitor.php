@@ -127,6 +127,23 @@ class phodevi_monitor extends phodevi_device_interface
 					$monitor[] = self::edid_monitor_parse(bin2hex($edid_raw));
 				}
 			}
+
+			if(empty($monitor) && is_readable('/var/log/syslog'))
+			{
+				// Fallback to reading from syslog
+				$syslog = shell_exec('grep "00 ff ff ff ff ff ff 00" /var/log/syslog | tail -n 1');
+				if(!empty($syslog))
+				{
+					if(preg_match('/(00\s?ff\s?ff\s?ff\s?ff\s?ff\s?ff\s?00[\s\da-fA-F]+)/', $syslog, $matches))
+					{
+						$hex = str_replace(array(' ', "\t", "\n", "\r"), '', $matches[1]);
+						if(strlen($hex) >= 256)
+						{
+							$monitor[] = self::edid_monitor_parse($hex);
+						}
+					}
+				}
+			}
 		}
 
 		$monitor = pts_arrays::array_to_cleansed_item_string($monitor);
@@ -193,6 +210,24 @@ class phodevi_monitor extends phodevi_device_interface
 				}
 			}
 			else
+			{
+				$monitor_count = 1;
+			}
+		}
+		else if(phodevi::is_haiku())
+		{
+			// Assume 1 if EDID is present
+			$edid_present = false;
+			if(pts_client::executable_in_path('get_edid') && !empty(shell_exec('get_edid 2>/dev/null')))
+			{
+				$edid_present = true;
+			}
+			else if(is_readable('/var/log/syslog') && !empty(shell_exec('grep "00 ff ff ff ff ff ff 00" /var/log/syslog | tail -n 1')))
+			{
+				$edid_present = true;
+			}
+
+			if($edid_present)
 			{
 				$monitor_count = 1;
 			}

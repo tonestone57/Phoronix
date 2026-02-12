@@ -116,7 +116,13 @@ class phodevi_disk extends phodevi_device_interface
 		$block_size = -1;
 		if(PTS_IS_CLIENT && pts_client::executable_in_path('stat') && !phodevi::is_windows())
 		{
-			$stat = trim(shell_exec('stat -f -c %S ' . $path));
+			$stat = trim(shell_exec('stat -f -c %S ' . $path . ' 2>/dev/null'));
+
+			if(!is_numeric($stat) || $stat <= 0)
+			{
+				// Fallback for BSD stat
+				$stat = trim(shell_exec('stat -f %k ' . $path . ' 2>/dev/null'));
+			}
 
 			if(is_numeric($stat) && $stat > 0)
 			{

@@ -1189,7 +1189,7 @@ class pts_client
 			{
 				if(!empty($p) && is_dir('/proc/' . $p))
 				{
-					self::kill_process_with_children_processes($p, false);
+					self::kill_process_with_children_processes($p, $sleep);
 				}
 			}
 		}

@@ -74,13 +74,35 @@ class phodevi_chipset extends phodevi_device_interface
 		else if(phodevi::is_haiku())
 		{
 			$listdev = phodevi_haiku_parser::read_listdev();
+			$host_bridge = null;
+			$isa_bridge = null;
+
 			foreach($listdev as $device)
 			{
 				if(stripos($device['class'], 'Bridge') !== false)
 				{
-					$info = $device['device'];
-					break;
+					if(stripos($device['device'], 'Host bridge') !== false && empty($host_bridge))
+					{
+						$host_bridge = $device['device'];
+					}
+					else if((stripos($device['device'], 'ISA bridge') !== false || stripos($device['device'], 'LPC Bridge') !== false) && empty($isa_bridge))
+					{
+						$isa_bridge = $device['device'];
+					}
 				}
+			}
+
+			if(!empty($host_bridge))
+			{
+				$info = $host_bridge;
+				if(!empty($isa_bridge))
+				{
+					$info .= ' + ' . $isa_bridge;
+				}
+			}
+			else if(!empty($isa_bridge))
+			{
+				$info = $isa_bridge;
 			}
 		}
 		else if(phodevi::is_linux() || phodevi::is_hurd())

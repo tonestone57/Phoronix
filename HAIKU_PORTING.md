@@ -2,9 +2,9 @@
 
 This document outlines the status and implementation details of the Phoronix Test Suite (PTS) port to Haiku OS.
 
-## Status: External Dependencies Implemented
+## Status: Advanced Hardware Detection & Dependencies Implemented
 
-Hardware detection is complete, and support for installing external test dependencies via `pkgman` has been added.
+Hardware detection has been significantly enhanced, including GPU resolution/modes via EDID, network interface details, and better sensor parsing. External dependencies have been expanded.
 
 ## Implementation Details
 
@@ -16,25 +16,26 @@ Hardware detection is complete, and support for installing external test depende
     -   Updated `initial_setup()` to set the haiku flag when `php_uname('s')` returns "Haiku".
 
 ### 2. Hardware Detection (`phodevi_haiku_parser`)
--   **System**: Kernel release, build date, architecture (BePC mapped to i686), OS version.
--   **CPU**: Model, core count, feature flags (parsed from `sysinfo`).
--   **Memory**: Total physical memory.
+-   **System**: Kernel release, build date, architecture (BePC mapped to i686), OS version, Filesystem type (via `mount`).
+-   **CPU**: Model, core count, feature flags (parsed from `sysinfo`), Usage (improved `top` parsing).
+-   **Memory**: Total physical memory (fallback to `sysinfo`), Swap usage (via `top` with unit support).
 -   **Motherboard/BIOS**: Vendor, product, version, serial, BIOS date/vendor.
--   **GPU**: Model detection via `listdev`, PCI device ID extraction.
--   **Disk**: Capacity, filesystem, model name refinement (e.g. virtio_block).
--   **Network**: Interface detection via `listdev`.
--   **Battery**: Presence check via `/dev/power/acpi_battery`.
--   **Monitor**: EDID extraction via `get_edid`.
+-   **PCI/USB**: Enumeration via `listdev`.
+-   **GPU**: Model detection via `listdev`, PCI device ID, Resolution and Available Modes (via `get_edid` or `/var/log/syslog` parsing).
+-   **Disk**: Capacity, filesystem, model name refinement (e.g. virtio_block), Block size (via `stat`), `smartctl` Model Family fallback.
+-   **Network**: Interface detection via `listdev`, Active interface via `route`, MAC address (improved `ifconfig` parsing).
+-   **Audio**: Device string extraction via `listdev`.
+-   **Battery**: Presence check via `/dev/power/acpi_battery`, Capacity percentage parsing, Discharge state detection.
+-   **Monitor**: EDID extraction via `get_edid` or `/var/log/syslog` for model, count, and modes.
+-   **Sensors**: Thermal zones (text parsing support added).
 
 ### 3. External Dependencies
 -   **Installer Script**: `pts-core/external-test-dependencies/scripts/install-haiku-packages.sh` added to use `pkgman install -y`.
--   **Package Mappings**: `pts-core/external-test-dependencies/xml/haiku-packages.xml` added with mappings for:
-    -   `build-utilities` -> `gcc make`
-    -   `cmake`, `git`, `python`, `perl`, `pcre`, `curl`
-    -   `sdl-development` -> `libsdl`
-    -   `sdl2-development` -> `libsdl2`
-    -   `zlib-development` -> `zlib_devel`
-    -   `openssl-development` -> `openssl_devel`
+-   **Package Mappings**: `pts-core/external-test-dependencies/xml/haiku-packages.xml` extended.
+    -   Build Tools: `gcc`, `make`, `autoconf`, `automake`, `libtool`, `pkg-config`, `yasm`, `nasm`, `ninja`, `meson`, `llvm`, `clang`.
+    -   VCS: `git`, `mercurial`, `subversion`.
+    -   Libraries: `libsdl`, `libsdl2`, `zlib_devel`, `openssl_devel`, `boost_devel`, `ncurses_devel`, `libxml2_devel`, `freetype_devel`, `fontconfig_devel`, `libpng16_devel`, `libjpeg_turbo_devel`.
+    -   Utils: `dmidecode`, `mesa_demos`, `vulkan_tools`.
 
 ## Required Commands on Haiku
 The implementation relies on these standard Haiku commands:
@@ -42,7 +43,12 @@ The implementation relies on these standard Haiku commands:
 -   `listdev`
 -   `uname`
 -   `df`
+-   `mount`
+-   `top`
+-   `route`
+-   `ifconfig`
 -   `get_edid`
+-   `stat` (GNU or BSD syntax supported)
 -   `pkgman`
 -   `php` (CLI)
 
