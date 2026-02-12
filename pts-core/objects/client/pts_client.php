@@ -1166,7 +1166,7 @@ class pts_client
 			}
 		}
 	}
-	public static function kill_process_with_children_processes($pid)
+	public static function kill_process_with_children_processes($pid, $sleep = true)
 	{
 		if(is_dir('/proc/' . $pid) && is_file('/proc/' . $pid . '/task/' . $pid . '/children'))
 		{
@@ -1176,7 +1176,7 @@ class pts_client
 			{
 				if(!empty($p) && is_dir('/proc/' . $p))
 				{
-					self::kill_process_with_children_processes($p);
+					self::kill_process_with_children_processes($p, false);
 				}
 			}
 		}
@@ -1190,7 +1190,11 @@ class pts_client
 			{
 				shell_exec('kill -9 ' . $pid);
 			}
-			sleep(1);
+
+			if($sleep)
+			{
+				sleep(1);
+			}
 		}
 	}
 	public static function do_anonymous_usage_reporting()
