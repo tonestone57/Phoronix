@@ -52,7 +52,8 @@ class pts_math
 	}
 	public static function arithmetic_mean($values)
 	{
-		return array_sum($values) / count($values);
+		$count = count($values);
+		return $count > 0 ? (array_sum($values) / $count) : 0;
 	}
 	public static function geometric_mean($values)
 	{
