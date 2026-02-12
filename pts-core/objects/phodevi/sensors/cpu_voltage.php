@@ -30,6 +30,10 @@ class cpu_voltage extends phodevi_sensor
 	{
 		$voltage = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			$voltage = $this->cpu_voltage_linux();

@@ -34,6 +34,11 @@ class gpu_freq extends phodevi_sensor
 		$core_freq = 0;
 		$mem_freq = 0;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
+
 		if(phodevi::is_nvidia_graphics()) // NVIDIA GPU
 		{
 			$nv_freq = phodevi_parser::read_nvidia_extension('GPUCurrentClockFreqs');

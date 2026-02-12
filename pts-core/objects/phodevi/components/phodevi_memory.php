@@ -83,10 +83,14 @@ class phodevi_memory extends phodevi_device_interface
 				$mem_manufacturer = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Manufacturer', true, array('Unknown', 'Undefined', 'Not Specified'));
 				$mem_part = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Part Number', true, array('Unknown', 'Undefined', 'Not Specified'));
 			}
-			else
+
+			if(empty($mem_size) || $mem_size === false)
 			{
-				// $mem_size = phodevi_haiku_parser::read_sysinfo('mem_size');
-				$mem_size = false;
+				$sysinfo_mem = phodevi_haiku_parser::read_sysinfo('mem_size');
+				if(!empty($sysinfo_mem))
+				{
+					$mem_size = array($sysinfo_mem . 'MB');
+				}
 			}
 		}
 		else if(phodevi::is_linux())

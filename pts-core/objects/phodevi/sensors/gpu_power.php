@@ -33,6 +33,12 @@ class gpu_power extends phodevi_sensor
 	public function read_sensor()
 	{
 		$gpu_power = -1;
+
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
+
 		$en1_input_files = glob('/sys/class/drm/card*/device/hwmon/hwmon*/energy1_input');
 		if(($nvidia_smi = pts_client::executable_in_path('nvidia-smi')))
 		{
