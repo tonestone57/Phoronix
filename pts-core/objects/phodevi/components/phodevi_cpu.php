@@ -290,6 +290,12 @@ class phodevi_cpu extends phodevi_device_interface
 		{
 			$cache_size = phodevi_windows_parser::get_wmi_object('Win32_Processor', 'L2CacheSize');
 		}
+		else if(phodevi::is_haiku())
+		{
+			// Try parsing sysinfo for cache size if possible, or stub to 0
+			// Haiku sysinfo doesn't easily expose cache size in a standard parsed field yet
+			$cache_size = 0;
+		}
 
 		return $cache_size;
 	}

@@ -65,6 +65,10 @@ class cgroup_cpu_usage extends phodevi_sensor
 	}
 	public function support_check()
 	{
+		if(phodevi::is_haiku())
+		{
+			return false;
+		}
 		return phodevi::is_linux() && is_dir('/sys/fs/cgroup/cpu,cpuacct/');
 	}
 	public function read_sensor()

@@ -101,5 +101,30 @@
 			<Title>Ncurses</Title>
 			<PossibleNames>ncurses_devel</PossibleNames>
 		</Package>
+		<Package>
+			<GenericName>libxml2-development</GenericName>
+			<Title>LibXML2</Title>
+			<PossibleNames>libxml2_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>freetype-development</GenericName>
+			<Title>FreeType</Title>
+			<PossibleNames>freetype_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>fontconfig-development</GenericName>
+			<Title>Fontconfig</Title>
+			<PossibleNames>fontconfig_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>libpng-development</GenericName>
+			<Title>LibPNG</Title>
+			<PossibleNames>libpng16_devel</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>jpeg-development</GenericName>
+			<Title>JPEG</Title>
+			<PossibleNames>libjpeg_turbo_devel</PossibleNames>
+		</Package>
 	</ExternalDependencies>
 </PhoronixTestSuite>

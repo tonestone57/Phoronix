@@ -178,6 +178,10 @@ class phodevi_system extends phodevi_device_interface
 		{
 			$hostname = trim(shell_exec($bin . ' 2>&1'));
 		}
+		else if(phodevi::is_haiku())
+		{
+			$hostname = trim(shell_exec('hostname 2>&1'));
+		}
 		else if(phodevi::is_windows())
 		{
 			$hostname = getenv('USERDOMAIN');
@@ -1131,6 +1135,11 @@ class phodevi_system extends phodevi_device_interface
 	public static function sw_kernel_parameters()
 	{
 		$parameters = null;
+
+		if(phodevi::is_haiku())
+		{
+			return null;
+		}
 
 		if(is_file('/proc/cmdline') && is_file('/proc/modules'))
 		{
