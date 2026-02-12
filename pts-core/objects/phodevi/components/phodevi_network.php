@@ -146,7 +146,7 @@ class phodevi_network extends phodevi_device_interface
 			// 	inet addr: 10.0.2.15, Bcast: 10.0.2.255, Mask: 255.255.255.0
 
 			$ifconfig = shell_exec($ifconfig . ' 2>&1');
-			if(preg_match_all('/inet addr: ([0-9\.]+)/', $ifconfig, $matches))
+			if(preg_match_all('/inet addr:\s*([0-9\.]+)/', $ifconfig, $matches))
 			{
 				foreach($matches[1] as $ipv4)
 				{
@@ -219,7 +219,7 @@ class phodevi_network extends phodevi_device_interface
 		else if(phodevi::is_haiku() && ($ifconfig = pts_client::executable_in_path('ifconfig')))
 		{
 			$ifconfig = shell_exec($ifconfig . ' 2>&1');
-			if(preg_match('/hardware address: ([0-9a-fA-F:]+)/', $ifconfig, $matches))
+			if(preg_match('/hardware address:\s*([0-9a-fA-F:]+)/', $ifconfig, $matches))
 			{
 				$mac = $matches[1];
 			}

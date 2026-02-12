@@ -210,12 +210,32 @@ class phodevi_haiku_parser
 		return $devices;
 	}
 
+	public static function read_os_version()
+	{
+		// 1. Try sysinfo
+		$sysinfo = self::read_sysinfo('kernel_release');
+		if(strpos($sysinfo, 'hrev') !== false)
+		{
+			// Format often like: Haiku R1/beta4 (hrev56578)
+			return $sysinfo;
+		}
+
+		// 2. Try uname
+		$uname_v = php_uname('v');
+		if(!empty($uname_v))
+		{
+			return $uname_v;
+		}
+
+		return 'Unknown';
+	}
+
 	public static function read_memory_usage()
 	{
 		// Parsing sysinfo -mem to get usage
 		// 32768 MB total, 25000 MB used (76%)
 		$sysinfo_mem = shell_exec('sysinfo -mem 2>&1');
-		if(preg_match('/([0-9]+) MB used/', $sysinfo_mem, $matches))
+		if(preg_match('/([0-9]+)\s*MB\s*used/i', $sysinfo_mem, $matches))
 		{
 			return $matches[1];
 		}
@@ -232,13 +252,13 @@ class phodevi_haiku_parser
 		// ...
 		// 91.7% idle
 		$top = shell_exec('top -n 1 2>&1');
-		if(preg_match('/([0-9\.]+)% idle/', $top, $matches))
+		if(preg_match('/([0-9\.]+)\s*%\s*idle/i', $top, $matches))
 		{
 			$idle = $matches[1];
 			return 100 - $idle;
 		}
 		// Fallback to standard Linux top format just in case
-		else if(preg_match('/([0-9\.]+) id/', $top, $matches))
+		else if(preg_match('/([0-9\.]+)\s*id/i', $top, $matches))
 		{
 			$idle = $matches[1];
 			return 100 - $idle;
@@ -254,9 +274,9 @@ class phodevi_haiku_parser
 		// But let's check vm_stat output format again or try top
 		// Top output: MiB Swap: 3784.0 total, 3756.0 free, 28.0 used.
 		$top = shell_exec('top -n 1 2>&1');
-		if(preg_match('/Swap:\s+([0-9\.]+)\s+total,\s+([0-9\.]+)\s+free,\s+([0-9\.]+)\s+used/', $top, $matches))
+		if(preg_match('/Swap:.*?\s+([0-9\.]+)\s+used/i', $top, $matches))
 		{
-			return $matches[3]; // Used
+			return $matches[1]; // Used
 		}
 		// Haiku might report it differently in some versions or depending on top implementation
 		// Try sysinfo again if we can find swap there (unlikely based on previous checks but good to note)

@@ -1250,11 +1250,7 @@ class phodevi_system extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			$os_version = php_uname('v');
-			if(($x = strpos($os_version, ' ')) !== false)
-			{
-				$os_version = substr($os_version, 0, $x);
-			}
+			$os_version = phodevi_haiku_parser::read_os_version();
 		}
 		else
 		{
