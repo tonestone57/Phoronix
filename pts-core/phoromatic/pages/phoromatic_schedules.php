@@ -69,7 +69,7 @@ class phoromatic_schedules implements pts_webui_interface
 							if(substr($i, 0, 12) == 'test_option_' && substr($i, -9) != '_selected')
 							{
 								phoromatic_quit_if_invalid_input_found(array($i, $i . '_selected'));
-								array_push($args, $v);
+								array_push($args, pts_strings::keep_in_string($v, pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DASH | pts_strings::CHAR_DECIMAL | pts_strings::CHAR_SPACE | pts_strings::CHAR_UNDERSCORE | pts_strings::CHAR_COMMA | pts_strings::CHAR_AT | pts_strings::CHAR_COLON | pts_strings::CHAR_SLASH | pts_strings::CHAR_PLUS | pts_strings::CHAR_EQUAL));
 								array_push($args_name, $_POST[$i . '_selected']);
 							}
 						}

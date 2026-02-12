@@ -789,7 +789,7 @@ class pts_strings
 	}
 	public static function safety_strings_to_reject()
 	{
-		return array('<', '>', 'document.write', '../', 'onerror', 'onload', 'alert(', 'String.', 'confirm(', 'focus=', '&lt', '&gt', '&#');
+		return array('`', '$(', '<', '>', 'document.write', '../', 'onerror', 'onload', 'alert(', 'String.', 'confirm(', 'focus=', '&lt', '&gt', '&#');
 	}
 	public static function exit_if_contains_unsafe_data($check, $exit_msg = 'Exited due to suspicious URL.')
 	{
