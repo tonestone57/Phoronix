@@ -730,38 +730,14 @@ class phodevi extends phodevi_base
 		else if(($uptime_cmd = pts_client::executable_in_path('uptime')) != false)
 		{
 			$uptime_counter = 0;
-			$uptime_output = shell_exec($uptime_cmd . ' 2>&1');
 
 			if(phodevi::is_haiku())
 			{
-				// Haiku uptime format: "uptime: 1d 2h 30m 10s" or "uptime: 2h 30m 10s"
-				if(preg_match('/uptime:\s+(.*)/', $uptime_output, $matches))
-				{
-					$parts = explode(' ', $matches[1]);
-					foreach($parts as $part)
-					{
-						$val = intval($part);
-						if(strpos($part, 'd') !== false)
-						{
-							$uptime_counter += $val * 86400;
-						}
-						elseif(strpos($part, 'h') !== false)
-						{
-							$uptime_counter += $val * 3600;
-						}
-						elseif(strpos($part, 'm') !== false)
-						{
-							$uptime_counter += $val * 60;
-						}
-						elseif(strpos($part, 's') !== false)
-						{
-							$uptime_counter += $val;
-						}
-					}
-				}
+				$uptime_counter = phodevi_haiku_parser::read_uptime();
 			}
 			else
 			{
+				$uptime_output = shell_exec($uptime_cmd . ' 2>&1');
 				$uptime_output = substr($uptime_output, strpos($uptime_output, ' up') + 3);
 				$uptime_output = substr($uptime_output, 0, strpos($uptime_output, ' user'));
 				$uptime_output = substr($uptime_output, 0, strrpos($uptime_output, ',')) . ' ';

@@ -213,13 +213,25 @@ class phodevi_haiku_parser
 	public static function read_cpu_usage()
 	{
 		// Use top -n 1
+		// Try parsing Haiku top output, which might differ from Linux
+		// " 2.8% cpu" or similar?
+		// Actually typical Haiku top output shows:
+		// Load average: ...
+		// ...
+		// 91.7% idle
 		$top = shell_exec('top -n 1 2>&1');
-		// %Cpu(s): 2.8 us, 5.6 sy, 0.0 ni, 91.7 id, 0.0 wa, 0.0 hi, 0.0 si, 0.0 st
-		if(preg_match('/([0-9\.]+) id/', $top, $matches))
+		if(preg_match('/([0-9\.]+)% idle/', $top, $matches))
 		{
 			$idle = $matches[1];
 			return 100 - $idle;
 		}
+		// Fallback to standard Linux top format just in case
+		else if(preg_match('/([0-9\.]+) id/', $top, $matches))
+		{
+			$idle = $matches[1];
+			return 100 - $idle;
+		}
+
 		return -1;
 	}
 
@@ -234,6 +246,9 @@ class phodevi_haiku_parser
 		{
 			return $matches[3]; // Used
 		}
+		// Haiku might report it differently in some versions or depending on top implementation
+		// Try sysinfo again if we can find swap there (unlikely based on previous checks but good to note)
+
 		return -1;
 	}
 
@@ -337,6 +352,41 @@ class phodevi_haiku_parser
 			}
 		}
 		return $temp;
+	}
+
+	public static function read_uptime()
+	{
+		// Haiku uptime format: "uptime: 1d 2h 30m 10s" or "uptime: 2h 30m 10s"
+		$uptime_counter = 0;
+		if(($uptime_cmd = pts_client::executable_in_path('uptime')) != false)
+		{
+			$uptime_output = shell_exec($uptime_cmd . ' 2>&1');
+			if(preg_match('/uptime:\s+(.*)/', $uptime_output, $matches))
+			{
+				$parts = explode(' ', $matches[1]);
+				foreach($parts as $part)
+				{
+					$val = intval($part);
+					if(strpos($part, 'd') !== false)
+					{
+						$uptime_counter += $val * 86400;
+					}
+					elseif(strpos($part, 'h') !== false)
+					{
+						$uptime_counter += $val * 3600;
+					}
+					elseif(strpos($part, 'm') !== false)
+					{
+						$uptime_counter += $val * 60;
+					}
+					elseif(strpos($part, 's') !== false)
+					{
+						$uptime_counter += $val;
+					}
+				}
+			}
+		}
+		return $uptime_counter;
 	}
 }
 
