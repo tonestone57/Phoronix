@@ -49,6 +49,11 @@ class gpu_usage extends phodevi_sensor
 	{
 		$gpu_usage = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
+
 		if($this->probe_nvidia_settings)
 		{
 			$gpu_usage = self::read_nvidia_settings_gpu_utilization();

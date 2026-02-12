@@ -30,6 +30,11 @@ class gpu_voltage extends phodevi_sensor
 	{
 		$sensor = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
+
 		// TODO XXX: Nouveau driver exposes GPU voltage on at least some cards via performance_level
 		if(is_file('/sys/class/drm/card0/device/hwmon/hwmon1/in0_label') && pts_file_io::file_get_contents('/sys/class/drm/card0/device/hwmon/hwmon1/in0_label') == 'vddgfx' && is_file('/sys/class/drm/card0/device/hwmon/hwmon1/in0_input'))
 		{

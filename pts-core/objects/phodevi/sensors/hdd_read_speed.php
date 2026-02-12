@@ -89,6 +89,10 @@ class hdd_read_speed extends phodevi_sensor
 	{
 		$read_speed = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			$read_speed = $this->hdd_read_speed_linux();

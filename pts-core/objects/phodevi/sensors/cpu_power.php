@@ -31,6 +31,10 @@ class cpu_power extends phodevi_sensor
 
 	public function read_sensor()
 	{
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			return $this->cpu_power_linux();

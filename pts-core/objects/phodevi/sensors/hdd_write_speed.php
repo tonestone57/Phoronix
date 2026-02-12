@@ -88,6 +88,10 @@ class hdd_write_speed extends phodevi_sensor
 	{
 		$write_speed = -1;
 
+		if(phodevi::is_haiku())
+		{
+			return -1;
+		}
 		if(phodevi::is_linux())
 		{
 			$write_speed = $this->hdd_write_speed_linux();

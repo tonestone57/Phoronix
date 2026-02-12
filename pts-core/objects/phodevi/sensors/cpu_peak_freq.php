@@ -37,6 +37,10 @@ class cpu_peak_freq extends phodevi_sensor
 	}
 	public function support_check()
 	{
+		if(phodevi::is_haiku())
+		{
+			return false;
+		}
 		return phodevi::is_linux();
 	}
 	public function get_readable_device_name()

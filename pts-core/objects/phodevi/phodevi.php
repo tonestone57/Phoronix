@@ -798,6 +798,10 @@ class phodevi extends phodevi_base
 		{
 			$reboot_cmd = 'reboot';
 		}
+		else if(phodevi::is_haiku())
+		{
+			$reboot_cmd = 'shutdown -r';
+		}
 		else if(pts_client::executable_in_path('shutdown'))
 		{
 			// macOS
@@ -824,6 +828,11 @@ class phodevi extends phodevi_base
 		if(pts_client::executable_in_path('poweroff'))
 		{
 			shell_exec('poweroff');
+			sleep(5);
+		}
+		else if(phodevi::is_haiku())
+		{
+			shell_exec('shutdown -p');
 			sleep(5);
 		}
 		if(phodevi::is_windows())
