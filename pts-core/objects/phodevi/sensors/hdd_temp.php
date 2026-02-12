@@ -80,6 +80,19 @@ class hdd_temp extends phodevi_sensor
 
 			return $supported;
 		}
+		else if(phodevi::is_haiku())
+		{
+			$supported = array();
+			$disks = phodevi_haiku_parser::read_disk_info();
+			foreach($disks as $disk)
+			{
+				if(strpos($disk['filesystem'], '/dev/disk') === 0)
+				{
+					$supported[] = $disk['filesystem'];
+				}
+			}
+			return $supported;
+		}
 
 		return NULL;
 	}
@@ -93,7 +106,7 @@ class hdd_temp extends phodevi_sensor
 		}
 		else if(phodevi::is_haiku())
 		{
-			$temp = -1;
+			$temp = phodevi_parser::read_hddtemp($this->disk_to_monitor);
 		}
 
 		return pts_math::set_precision($temp, 2);

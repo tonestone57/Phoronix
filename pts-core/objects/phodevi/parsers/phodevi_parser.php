@@ -170,6 +170,23 @@ class phodevi_parser
 			}
 		}
 
+		if($hdd_temperature == -1 && pts_client::executable_in_path('smartctl') && !empty($disk))
+		{
+			$output = shell_exec('smartctl -A ' . $disk . ' 2>&1');
+			if(preg_match('/Temperature_Celsius.*\s([0-9]+)$/m', $output, $matches))
+			{
+				$hdd_temperature = $matches[1];
+			}
+			else if(preg_match('/Airflow_Temperature_Cel.*\s([0-9]+) \(Min/', $output, $matches))
+			{
+				$hdd_temperature = $matches[1];
+			}
+			else if(preg_match('/Current Drive Temperature:\s+([0-9]+)/', $output, $matches))
+			{
+				$hdd_temperature = $matches[1];
+			}
+		}
+
 		return $hdd_temperature;
 	}
 	public static function read_xorg_module_version($module)

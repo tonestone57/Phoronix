@@ -132,9 +132,21 @@ class phodevi_haiku_parser
 
 	public static function read_listdev($listdev_output = null)
 	{
-		// Hardware sensor monitoring is not yet supported on Haiku as there isn't a standardized command-line interface for it yet.
+		static $listdev_cache = null;
 
-		$listdev = $listdev_output == null ? shell_exec('listdev 2>&1') : $listdev_output;
+		if($listdev_output != null)
+		{
+			$listdev = $listdev_output;
+		}
+		else
+		{
+			if($listdev_cache == null)
+			{
+				$listdev_cache = shell_exec('listdev 2>&1');
+			}
+			$listdev = $listdev_cache;
+		}
+
 		$devices = array();
 
 		// Basic parsing of listdev output
@@ -387,6 +399,49 @@ class phodevi_haiku_parser
 			}
 		}
 		return $uptime_counter;
+	}
+
+	public static function read_smartctl_info($device_path)
+	{
+		// Returns array with 'model' and 'serial' if found
+		$info = array();
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -i ' . $device_path . ' 2>&1');
+			if(preg_match('/Device Model:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+			else if(preg_match('/Product:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+
+			if(preg_match('/Serial Number:\s+(.*)/', $output, $matches))
+			{
+				$info['serial'] = trim($matches[1]);
+			}
+		}
+		return $info;
+	}
+
+	public static function read_smartctl_temp($device_path)
+	{
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -A ' . $device_path . ' 2>&1');
+			// 194 Temperature_Celsius     0x0022   100   100   000    Old_age   Always       -       34
+			if(preg_match('/Temperature_Celsius.*\s([0-9]+)$/m', $output, $matches))
+			{
+				return $matches[1];
+			}
+			// 190 Airflow_Temperature_Cel 0x0022   066   055   045    Old_age   Always       -       34 (Min/Max 25/45)
+			if(preg_match('/Airflow_Temperature_Cel.*\s([0-9]+) \(Min/', $output, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return -1;
 	}
 }
 
