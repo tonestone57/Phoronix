@@ -176,5 +176,10 @@
 			<Title>Boost</Title>
 			<PossibleNames>boost_devel</PossibleNames>
 		</Package>
+		<Package>
+			<GenericName>read_edid</GenericName>
+			<Title>read_edid</Title>
+			<PossibleNames>read_edid</PossibleNames>
+		</Package>
 	</ExternalDependencies>
 </PhoronixTestSuite>

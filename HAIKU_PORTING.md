@@ -21,12 +21,12 @@ Hardware detection has been significantly enhanced, including GPU resolution/mod
 -   **Memory**: Total physical memory (fallback to `sysinfo`), Swap usage (via `top` with unit support).
 -   **Motherboard/BIOS**: Vendor, product, version, serial, BIOS date/vendor.
 -   **PCI/USB**: Enumeration via `listdev`.
--   **GPU**: Model detection via `listdev`, PCI device ID, Resolution and Available Modes (via `get_edid` parsing).
+-   **GPU**: Model detection via `listdev`, PCI device ID, Resolution and Available Modes (via `get_edid` or `/var/log/syslog` parsing).
 -   **Disk**: Capacity, filesystem, model name refinement (e.g. virtio_block), Block size (via `stat`), `smartctl` Model Family fallback.
 -   **Network**: Interface detection via `listdev`, Active interface via `route`, MAC address (improved `ifconfig` parsing).
 -   **Audio**: Device string extraction via `listdev`.
 -   **Battery**: Presence check via `/dev/power/acpi_battery`, Capacity percentage parsing, Discharge state detection.
--   **Monitor**: EDID extraction via `get_edid` for model, count, and modes.
+-   **Monitor**: EDID extraction via `get_edid` or `/var/log/syslog` for model, count, and modes.
 -   **Sensors**: Thermal zones (text parsing support added).
 
 ### 3. External Dependencies
