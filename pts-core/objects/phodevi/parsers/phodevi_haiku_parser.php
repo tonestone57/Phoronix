@@ -63,9 +63,9 @@ class phodevi_haiku_parser
 				}
 				break;
 			case 'cpu_features':
-				if(preg_match('/Features: (.*)/', $sysinfo, $matches))
+				if(preg_match('/Features: (?:0x[0-9a-fA-F]+\.\s*)?(.*)/', $sysinfo, $matches))
 				{
-					$return = $matches[1];
+					$return = strtolower($matches[1]);
 				}
 				break;
 			case 'system_vendor':
@@ -413,6 +413,10 @@ class phodevi_haiku_parser
 				$info['model'] = trim($matches[1]);
 			}
 			else if(preg_match('/Product:\s+(.*)/', $output, $matches))
+			{
+				$info['model'] = trim($matches[1]);
+			}
+			else if(preg_match('/Model Number:\s+(.*)/', $output, $matches))
 			{
 				$info['model'] = trim($matches[1]);
 			}
