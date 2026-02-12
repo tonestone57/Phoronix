@@ -428,6 +428,10 @@ class phodevi_motherboard extends phodevi_device_interface
 		{
 			$serial = phodevi_windows_parser::get_wmi_object('Win32_BaseBoard', 'SerialNumber');
 		}
+		else if(phodevi::is_haiku())
+		{
+			$serial = phodevi_haiku_parser::read_sysinfo('system_serial');
+		}
 
 		return $serial;
 	}

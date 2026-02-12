@@ -56,5 +56,50 @@
 			<Title>OpenSSL</Title>
 			<PossibleNames>openssl_devel</PossibleNames>
 		</Package>
+		<Package>
+			<GenericName>bison</GenericName>
+			<Title>Bison</Title>
+			<PossibleNames>bison</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>flex</GenericName>
+			<Title>Flex</Title>
+			<PossibleNames>flex</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>autoconf</GenericName>
+			<Title>Autoconf</Title>
+			<PossibleNames>autoconf</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>automake</GenericName>
+			<Title>Automake</Title>
+			<PossibleNames>automake</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>libtool</GenericName>
+			<Title>Libtool</Title>
+			<PossibleNames>libtool</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>pkg-config</GenericName>
+			<Title>pkg-config</Title>
+			<PossibleNames>pkgconfig</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>mesa-demos</GenericName>
+			<Title>Mesa Demos</Title>
+			<PossibleNames>mesa_demos</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>vulkan-tools</GenericName>
+			<Title>Vulkan Tools</Title>
+			<PossibleNames>vulkan_tools</PossibleNames>
+		</Package>
+		<Package>
+			<GenericName>ncurses-development</GenericName>
+			<Title>Ncurses</Title>
+			<PossibleNames>ncurses_devel</PossibleNames>
+		</Package>
 	</ExternalDependencies>
 </PhoronixTestSuite>

@@ -358,13 +358,22 @@ class phodevi_disk extends phodevi_device_interface
 							$fs_dev = basename($fs_dev);
 							if($fs_dev == 'raw')
 							{
-								$fs_dev = basename(dirname($fs['filesystem'])); // e.g. /dev/disk/.../0/raw -> 0
-								if(is_numeric($fs_dev))
+								$path_parts = explode('/', $fs['filesystem']);
+								// /dev/disk/virtual/virtio_block/0/raw
+								// 0, 1, 2, 3, 4, 5, 6
+								$count = count($path_parts);
+								if($count > 4)
 								{
-									$parent = basename(dirname(dirname($fs['filesystem'])));
-									if($parent != 'disk')
+									// Try to find the most descriptive part (usually 4th or 3rd from end)
+									// Scan backwards
+									for($i = $count - 2; $i >= 2; $i--)
 									{
-										$fs_dev = $parent; // e.g. virtio_block
+										$part = $path_parts[$i];
+										if(!is_numeric($part) && $part != 'disk')
+										{
+											$fs_dev = $part;
+											break;
+										}
 									}
 								}
 							}
