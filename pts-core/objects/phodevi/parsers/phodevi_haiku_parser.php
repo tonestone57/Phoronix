@@ -198,6 +198,18 @@ class phodevi_haiku_parser
 		return $devices;
 	}
 
+	public static function read_memory_usage()
+	{
+		// Parsing sysinfo -mem to get usage
+		// 32768 MB total, 25000 MB used (76%)
+		$sysinfo_mem = shell_exec('sysinfo -mem 2>&1');
+		if(preg_match('/([0-9]+) MB used/', $sysinfo_mem, $matches))
+		{
+			return $matches[1];
+		}
+		return -1;
+	}
+
 	public static function read_disk_info($df_output = null)
 	{
 		// Use df

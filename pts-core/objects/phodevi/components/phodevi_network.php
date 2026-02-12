@@ -146,12 +146,15 @@ class phodevi_network extends phodevi_device_interface
 			// 	inet addr: 10.0.2.15, Bcast: 10.0.2.255, Mask: 255.255.255.0
 
 			$ifconfig = shell_exec($ifconfig . ' 2>&1');
-			if(preg_match('/inet addr: ([0-9\.]+)/', $ifconfig, $matches))
+			if(preg_match_all('/inet addr: ([0-9\.]+)/', $ifconfig, $matches))
 			{
-				$ipv4 = $matches[1];
-				if($ipv4 != '127.0.0.1')
+				foreach($matches[1] as $ipv4)
 				{
-					$local_ip = $ipv4;
+					if($ipv4 != '127.0.0.1')
+					{
+						$local_ip = $ipv4;
+						break;
+					}
 				}
 			}
 		}
