@@ -121,13 +121,17 @@ class phodevi_haiku_parser
 				}
 				break;
 			case 'kernel_release':
-				if(preg_match('/Kernel: Haiku (.*?) \(/', $sysinfo, $matches))
+				if(preg_match('/Kernel: Haiku (.*)/', $sysinfo, $matches))
 				{
-					$return = $matches[1];
-				}
-				else if(preg_match('/Kernel: Haiku (.*)/', $sysinfo, $matches))
-				{
-					$return = trim($matches[1]);
+					$kernel_string = trim($matches[1]);
+					// Try to strip potential trailing date in parenthesis e.g. (Oct 21 2023)
+					// But keep (hrevXXXXX)
+					// If it ends with ) and contains a date-like structure
+					if(preg_match('/ \([A-Z][a-z]{2} [0-9]{1,2} .*?\)$/', $kernel_string))
+					{
+						$kernel_string = preg_replace('/ \([A-Z][a-z]{2} [0-9]{1,2} .*?\)$/', '', $kernel_string);
+					}
+					$return = $kernel_string;
 				}
 				break;
 			case 'kernel_date':
@@ -1314,6 +1318,339 @@ class phodevi_haiku_parser
 		$users = is_readable('/etc/passwd') ? count(file('/etc/passwd')) : -1;
 		$groups = is_readable('/etc/group') ? count(file('/etc/group')) : -1;
 		return array('Users' => $users, 'Groups' => $groups);
+	}
+
+	public static function read_cmake_version()
+	{
+		if(($bin = pts_client::executable_in_path('cmake')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/cmake version ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_make_version()
+	{
+		if(($bin = pts_client::executable_in_path('make')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/GNU Make ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_gdb_version()
+	{
+		if(($bin = pts_client::executable_in_path('gdb')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/GDB\) ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_clang_version()
+	{
+		if(($bin = pts_client::executable_in_path('clang')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/clang version ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_node_version()
+	{
+		if(($bin = pts_client::executable_in_path('node')))
+		{
+			$out = shell_exec($bin . ' -v 2>&1');
+			if(preg_match('/v([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_network_mtu($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match('/mtu ([0-9]+)/', $out, $matches))
+		{
+			return $matches[1];
+		}
+		return null;
+	}
+
+	public static function read_network_link_status($ifconfig_output = null)
+	{
+		// ifconfig link status logic
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(stripos($out, 'status: active') !== false) return 'Up';
+		if(stripos($out, 'status: no carrier') !== false) return 'Down';
+		return null;
+	}
+
+	public static function read_wifi_ssid($ifconfig_output = null)
+	{
+		// scan media for ssid if available
+		return null;
+	}
+
+	public static function read_disk_rotation_speed($device_path)
+	{
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -i ' . escapeshellarg($device_path) . ' 2>&1');
+			if(preg_match('/Rotation Rate:\s+([0-9]+)/', $output, $matches))
+			{
+				return $matches[1] . ' RPM';
+			}
+			if(strpos($output, 'Solid State Device') !== false)
+			{
+				return 'SSD';
+			}
+		}
+		return null;
+	}
+
+	public static function read_disk_sector_size($device_path)
+	{
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -i ' . escapeshellarg($device_path) . ' 2>&1');
+			if(preg_match('/Sector Size:\s+(.*)/', $output, $matches))
+			{
+				return trim($matches[1]);
+			}
+		}
+		return null;
+	}
+
+	public static function read_disk_model_family($device_path)
+	{
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -i ' . escapeshellarg($device_path) . ' 2>&1');
+			if(preg_match('/Model Family:\s+(.*)/', $output, $matches))
+			{
+				return trim($matches[1]);
+			}
+		}
+		return null;
+	}
+
+	public static function read_audio_driver($listdev_output = null)
+	{
+		// From listdev
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'Multimedia') !== false)
+			{
+				return isset($dev['device']) ? $dev['device'] : null;
+			}
+		}
+		return null;
+	}
+
+	public static function read_webcam_devices()
+	{
+		$cams = array();
+		if(is_dir('/dev/video/usb'))
+		{
+			$cams = scandir('/dev/video/usb');
+			$cams = array_diff($cams, array('.', '..'));
+		}
+		return $cams;
+	}
+
+	public static function read_bluetooth_devices()
+	{
+		// Check for bluetooth stacks or devs
+		return array();
+	}
+
+	public static function read_usb_version($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'USB') !== false)
+			{
+				if(stripos($dev['device'], 'xHCI') !== false) return '3.0';
+				if(stripos($dev['device'], 'EHCI') !== false) return '2.0';
+				if(strpos($dev['device'], '3.0') !== false) return '3.0';
+				if(strpos($dev['device'], '2.0') !== false) return '2.0';
+			}
+		}
+		return null;
+	}
+
+	public static function read_virtualization_platform($dmidecode_output = null)
+	{
+		$out = self::read_dmidecode('system', $dmidecode_output);
+		if(preg_match('/Product Name: (.*)/', $out, $matches))
+		{
+			$prod = trim($matches[1]);
+			if(stripos($prod, 'QEMU') !== false) return 'QEMU';
+			if(stripos($prod, 'VirtualBox') !== false) return 'VirtualBox';
+			if(stripos($prod, 'VMware') !== false) return 'VMware';
+		}
+		return null;
+	}
+
+	public static function read_haiku_revision($sysinfo_output = null)
+	{
+		$rel = self::read_sysinfo('kernel_release', $sysinfo_output);
+		if(preg_match('/hrev([0-9]+)/', $rel, $matches))
+		{
+			return $matches[1];
+		}
+		return null;
+	}
+
+	public static function read_system_language()
+	{
+		if(pts_client::executable_in_path('locale'))
+		{
+			return trim(shell_exec('locale -a 2>&1'));
+		}
+		return null;
+	}
+
+	public static function read_cpu_stepping($sysinfo_output = null)
+	{
+		// sysinfo: CPU #0: ...
+		// Stepping not explicitly in standard sysinfo string usually
+		return null;
+	}
+
+	public static function read_cpu_microcode($sysinfo_output = null)
+	{
+		return null;
+	}
+
+	public static function read_kernel_tainted()
+	{
+		return '0';
+	}
+
+	public static function read_process_pid($name)
+	{
+		if(($pidof = pts_client::executable_in_path('pidof')))
+		{
+			return trim(shell_exec($pidof . ' ' . escapeshellarg($name) . ' 2>&1'));
+		}
+		return null;
+	}
+
+	public static function read_process_parent_pid($pid)
+	{
+		// ps on Haiku...
+		return null;
+	}
+
+	public static function read_process_state($pid)
+	{
+		return null;
+	}
+
+	public static function read_process_memory_usage($pid)
+	{
+		return null;
+	}
+
+	public static function read_process_cpu_usage($pid)
+	{
+		return null;
+	}
+
+	public static function read_battery_time_remaining()
+	{
+		// /dev/power/acpi_battery/0/battery_status or similar?
+		// No standard file for time remaining
+		return null;
+	}
+
+	public static function read_battery_charge_rate()
+	{
+		return null;
+	}
+
+	public static function read_opencl_device_count()
+	{
+		if(pts_client::executable_in_path('clinfo'))
+		{
+			$out = shell_exec('clinfo 2>&1');
+			return substr_count($out, 'Device Name');
+		}
+		return 0;
+	}
+
+	public static function read_vulkan_device_count()
+	{
+		if(pts_client::executable_in_path('vulkaninfo'))
+		{
+			$out = shell_exec('vulkaninfo 2>&1');
+			// Check for GPU entries
+			return substr_count($out, 'GPU id');
+		}
+		return 0;
+	}
+
+	public static function read_pci_vendor_id($listdev_output = null)
+	{
+		// Extract first PCI vendor
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(isset($dev['vendor_id'])) return $dev['vendor_id'];
+		}
+		return null;
+	}
+
+	public static function read_pci_device_id($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(isset($dev['device_id'])) return $dev['device_id'];
+		}
+		return null;
+	}
+
+	public static function read_screen_brightness()
+	{
+		return null;
+	}
+
+	public static function read_system_runlevel()
+	{
+		return 'Multi-User'; // Haiku is graphical multi-threaded
+	}
+
+	public static function read_fs_mount_time($mount_point = '/')
+	{
+		// stat -c %Y ?
+		if(file_exists($mount_point))
+		{
+			return filectime($mount_point);
+		}
+		return null;
 	}
 
 	public static function read_fan_speed($zone = null)
