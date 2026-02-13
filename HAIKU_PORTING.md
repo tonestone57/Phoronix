@@ -34,8 +34,9 @@ Hardware detection has been significantly enhanced, including GPU resolution/mod
 -   **Package Mappings**: `pts-core/external-test-dependencies/xml/haiku-packages.xml` extended.
     -   Build Tools: `gcc`, `make`, `autoconf`, `automake`, `libtool`, `pkg-config`, `yasm`, `nasm`, `ninja`, `meson`, `llvm`, `clang`.
     -   VCS: `git`, `mercurial`, `subversion`.
-    -   Libraries: `libsdl`, `libsdl2`, `zlib_devel`, `openssl_devel`, `boost_devel`, `ncurses_devel`, `libxml2_devel`, `freetype_devel`, `fontconfig_devel`, `libpng16_devel`, `libjpeg_turbo_devel`.
-    -   Utils: `dmidecode`, `mesa_demos`, `vulkan_tools`.
+    -   Libraries: `libsdl`, `libsdl2`, `zlib_devel`, `openssl_devel`, `boost_devel`, `ncurses_devel`, `libxml2_devel`, `freetype_devel`, `fontconfig_devel`, `libpng16_devel`, `libjpeg_turbo_devel`, `gtk+_devel`, `imlib2_devel`, `portaudio_devel`, `glew_devel`, `freeimage_devel`, `eigen_devel`, `libaio_devel`, `openal_devel`, `libvorbis_devel`, `qt5_devel`, `libevent_devel`, `popt_devel`, `fftw_devel`, `openblas_devel`, `lapack_devel`, `openmpi_devel`, `bzip2_devel`, `gmp_devel`, `tinyxml_devel`, `attr_devel`, `opencv_devel`, `expat_devel`, `hdf5_devel`, `libconfig_devel`, `libuuid_devel`, `gflags_devel`, `benchmark_devel`, `snappy_devel`, `opencl_headers`.
+    -   Languages: `openjdk17`, `gfortran`, `tcl`, `rust`, `go`, `nodejs`.
+    -   Utils: `dmidecode`, `mesa_demos`, `vulkan_tools`, `bc`, `p7zip`, `smartmontools`, `scons`, `redis`.
 
 ## Required Commands on Haiku
 The implementation relies on these standard Haiku commands:
