@@ -93,9 +93,9 @@ class phodevi_haiku_parser
 				}
 				break;
 			case 'kernel_release':
-				if(preg_match('/Kernel: Haiku (.*) \(/', $sysinfo, $matches))
+				if(preg_match('/Kernel: Haiku (.*)/', $sysinfo, $matches))
 				{
-					$return = $matches[1];
+					$return = trim($matches[1]);
 				}
 				break;
 			case 'kernel_date':
@@ -230,11 +230,12 @@ class phodevi_haiku_parser
 		return 'Unknown';
 	}
 
-	public static function read_memory_usage()
+	public static function read_memory_usage($sysinfo_mem = null)
 	{
 		// Parsing sysinfo -mem to get usage
 		// 32768 MB total, 25000 MB used (76%)
-		$sysinfo_mem = shell_exec('sysinfo -mem 2>&1');
+		$sysinfo_mem = $sysinfo_mem == null ? shell_exec('sysinfo -mem 2>&1') : $sysinfo_mem;
+
 		if(preg_match('/([0-9]+)\s*MB\s*used/i', $sysinfo_mem, $matches))
 		{
 			return $matches[1];
@@ -242,10 +243,10 @@ class phodevi_haiku_parser
 		return -1;
 	}
 
-	public static function read_cpu_usage()
+	public static function read_cpu_usage($top = null)
 	{
 		// Use top -n 1
-		$top = shell_exec('top -n 1 2>&1');
+		$top = $top == null ? shell_exec('top -n 1 2>&1') : $top;
 		// CPU:  total:  8.3%   user:  1.6%   kernel:  6.7%   idle: 91.7%
 		if(preg_match('/total:\s*([0-9\.]+)\s*%/', $top, $matches))
 		{
@@ -266,10 +267,11 @@ class phodevi_haiku_parser
 		return -1;
 	}
 
-	public static function read_swap_usage()
+	public static function read_swap_usage($top = null)
 	{
 		// Top output: MiB Swap: 3784.0 total, 3756.0 free, 28.0 used.
-		$top = shell_exec('top -n 1 2>&1');
+		$top = $top == null ? shell_exec('top -n 1 2>&1') : $top;
+
 		if(preg_match('/(MiB|KiB|GiB|MB|KB|GB)?\s*Swap:.*?\s+([0-9\.]+)\s+used/i', $top, $matches))
 		{
 			$unit = strtoupper($matches[1]);
@@ -280,36 +282,88 @@ class phodevi_haiku_parser
 
 			return round($val);
 		}
+		else if(preg_match('/Swap:.*?\s+([0-9\.]+)\s+([a-zA-Z]+)\s+used/i', $top, $matches))
+		{
+			$val = $matches[1];
+			$unit = strtoupper($matches[2]);
+
+			if($unit == 'GIB' || $unit == 'GB') $val *= 1024;
+			else if($unit == 'KIB' || $unit == 'KB') $val /= 1024;
+
+			return round($val);
+		}
 
 		return -1;
 	}
 
-	public static function read_disk_info($df_output = null)
+	public static function read_disk_info($df_output = null, $mount_output = null)
 	{
 		// Use df
 		$df_output = $df_output == null ? shell_exec('df -h 2>&1') : $df_output;
 		$filesystems = array();
 
-		// Parse df output
-		// Filesystem      Size  Used Avail Use% Mounted on
-		// /dev/disk/...   ...   ...  ...   ...  /
-
-		$lines = explode("\n", $df_output);
-		array_shift($lines); // Remove header
-
-		foreach($lines as $line)
+		// Check for Haiku df format
+		// Mount           Type      Total    Used    Free
+		if(strpos($df_output, 'Mount') !== false && strpos($df_output, 'Type') !== false)
 		{
-			$parts = preg_split('/\s+/', trim($line));
-			if(count($parts) >= 6)
+			$mount_output = $mount_output == null ? shell_exec('mount 2>&1') : $mount_output;
+			$mount_map = array();
+			// Parse mount output to get device
+			// /dev/disk/virtual/virtio_block/0/raw on / type bfs (rw)
+			foreach(explode("\n", $mount_output) as $mline)
 			{
-				$filesystems[] = array(
-					'filesystem' => $parts[0],
-					'size' => $parts[1],
-					'used' => $parts[2],
-					'avail' => $parts[3],
-					'use_percent' => $parts[4],
-					'mount' => $parts[5]
-				);
+				if(preg_match('#(.*?) on (.*?) type (.*?) \(#', $mline, $matches))
+				{
+					$mount_map[$matches[2]] = $matches[1];
+				}
+			}
+
+			$lines = explode("\n", $df_output);
+			foreach($lines as $line)
+			{
+				$line = trim($line);
+				if(empty($line) || strpos($line, 'Mount') === 0 || strpos($line, '-') === 0) continue;
+
+				$parts = preg_split('/\s+/', $line);
+				if(count($parts) >= 5)
+				{
+					$mount_point = $parts[0];
+					$device = isset($mount_map[$mount_point]) ? $mount_map[$mount_point] : $mount_point;
+
+					$filesystems[] = array(
+						'filesystem' => $device,
+						'size' => $parts[2],
+						'used' => $parts[3],
+						'avail' => $parts[4],
+						'use_percent' => 'N/A',
+						'mount' => $mount_point
+					);
+				}
+			}
+		}
+		else
+		{
+			// Parse standard df output
+			// Filesystem      Size  Used Avail Use% Mounted on
+			// /dev/disk/...   ...   ...  ...   ...  /
+
+			$lines = explode("\n", $df_output);
+			array_shift($lines); // Remove header
+
+			foreach($lines as $line)
+			{
+				$parts = preg_split('/\s+/', trim($line));
+				if(count($parts) >= 6)
+				{
+					$filesystems[] = array(
+						'filesystem' => $parts[0],
+						'size' => $parts[1],
+						'used' => $parts[2],
+						'avail' => $parts[3],
+						'use_percent' => $parts[4],
+						'mount' => $parts[5]
+					);
+				}
 			}
 		}
 
@@ -401,13 +455,17 @@ class phodevi_haiku_parser
 		return $temp;
 	}
 
-	public static function read_uptime()
+	public static function read_uptime($uptime_output = null)
 	{
 		// Haiku uptime format: "uptime: 1d 2h 30m 10s" or "uptime: 2h 30m 10s"
 		$uptime_counter = 0;
-		if(($uptime_cmd = pts_client::executable_in_path('uptime')) != false)
+		if($uptime_output == null && ($uptime_cmd = pts_client::executable_in_path('uptime')) != false)
 		{
 			$uptime_output = shell_exec($uptime_cmd . ' 2>&1');
+		}
+
+		if($uptime_output)
+		{
 			if(preg_match('/uptime:\s+(.*)/', $uptime_output, $matches))
 			{
 				$parts = explode(' ', $matches[1]);
