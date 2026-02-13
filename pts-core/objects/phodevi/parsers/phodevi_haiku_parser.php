@@ -333,9 +333,9 @@ class phodevi_haiku_parser
 					// df -k outputs in KiB, convert to GB/MB string
 					$filesystems[] = array(
 						'filesystem' => $device,
-						'size' => pts_size::byte_format($parts[2] * 1024),
-						'used' => pts_size::byte_format($parts[3] * 1024),
-						'avail' => pts_size::byte_format($parts[4] * 1024),
+						'size' => self::byte_format($parts[2] * 1024),
+						'used' => self::byte_format($parts[3] * 1024),
+						'avail' => self::byte_format($parts[4] * 1024),
 						'use_percent' => 'N/A',
 						'mount' => $mount_point
 					);
@@ -356,11 +356,12 @@ class phodevi_haiku_parser
 				$parts = preg_split('/\s+/', trim($line));
 				if(count($parts) >= 6)
 				{
+					// df -k output in KiB
 					$filesystems[] = array(
 						'filesystem' => $parts[0],
-						'size' => $parts[1],
-						'used' => $parts[2],
-						'avail' => $parts[3],
+						'size' => self::byte_format($parts[1] * 1024),
+						'used' => self::byte_format($parts[2] * 1024),
+						'avail' => self::byte_format($parts[3] * 1024),
 						'use_percent' => $parts[4],
 						'mount' => $parts[5]
 					);
@@ -544,6 +545,24 @@ class phodevi_haiku_parser
 			}
 		}
 		return -1;
+	}
+
+	private static function byte_format($bytes)
+	{
+		if($bytes > 1073741824)
+		{
+			return round($bytes / 1073741824, 1) . 'GB';
+		}
+		elseif($bytes > 1048576)
+		{
+			return round($bytes / 1048576, 1) . 'MB';
+		}
+		elseif($bytes > 1024)
+		{
+			return round($bytes / 1024, 1) . 'KB';
+		}
+
+		return $bytes;
 	}
 }
 
