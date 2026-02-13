@@ -1653,6 +1653,379 @@ class phodevi_haiku_parser
 		return null;
 	}
 
+	public static function read_openssl_version()
+	{
+		if(($bin = pts_client::executable_in_path('openssl')))
+		{
+			$out = shell_exec($bin . ' version 2>&1');
+			if(preg_match('/OpenSSL ([0-9a-z\.]+)/i', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_curl_version()
+	{
+		if(($bin = pts_client::executable_in_path('curl')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/curl ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_flex_version()
+	{
+		if(($bin = pts_client::executable_in_path('flex')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/flex ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_bison_version()
+	{
+		if(($bin = pts_client::executable_in_path('bison')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/bison.*?([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_autoconf_version()
+	{
+		if(($bin = pts_client::executable_in_path('autoconf')))
+		{
+			$out = shell_exec($bin . ' --version 2>&1');
+			if(preg_match('/autoconf.*?([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_network_broadcast($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match('/Bcast:([0-9\.]+)/', $out, $matches))
+		{
+			return $matches[1];
+		}
+		return null;
+	}
+
+	public static function read_network_interface_type($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(stripos($out, 'loop') !== false) return 'Loopback';
+		if(stripos($out, 'wlan') !== false || stripos($out, 'wireless') !== false) return 'Wireless';
+		if(stripos($out, 'ether') !== false) return 'Ethernet';
+		return 'Unknown';
+	}
+
+	public static function read_network_driver_name($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'Network') !== false || stripos($dev['class'], 'Ethernet') !== false)
+			{
+				// Assuming device name implies driver or chipset
+				return $dev['device'];
+			}
+		}
+		return null;
+	}
+
+	public static function read_default_gateway_interface()
+	{
+		if(($route = pts_client::executable_in_path('route')))
+		{
+			$out = shell_exec($route . ' 2>&1');
+			// default 192.168.1.1 ... interface
+			if(preg_match('/default.*?\s+(\S+)$/m', $out, $matches))
+			{
+				return trim($matches[1]);
+			}
+		}
+		return null;
+	}
+
+	public static function read_network_ip_v4($ifconfig_output = null)
+	{
+		// Reuse get_ip logic but return here
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match('/inet addr: ([0-9\.]+)/', $out, $matches))
+		{
+			if($matches[1] != '127.0.0.1') return $matches[1];
+		}
+		return null;
+	}
+
+	public static function read_process_command($pid)
+	{
+		// In Haiku ps output: team thread name. Name is command.
+		// Need filtering by PID (team).
+		// shell_exec('ps | grep ' . $pid)
+		return null; // Implementation complex without ps flags
+	}
+
+	public static function read_process_user($pid)
+	{
+		return 'user'; // Haiku is single user effectively for GUI apps usually
+	}
+
+	public static function read_process_priority($pid)
+	{
+		return null;
+	}
+
+	public static function read_total_threads_count($ps_output = null)
+	{
+		// ps lists all threads
+		$ps = $ps_output == null ? shell_exec('ps 2>&1') : $ps_output;
+		return substr_count($ps, "\n") - 1;
+	}
+
+	public static function read_process_id_list($ps_output = null)
+	{
+		$pids = array();
+		$ps = $ps_output == null ? shell_exec('ps 2>&1') : $ps_output;
+		$lines = explode("\n", $ps);
+		array_shift($lines);
+		foreach($lines as $line)
+		{
+			$parts = preg_split('/\s+/', trim($line));
+			if(count($parts) >= 1 && is_numeric($parts[0]))
+			{
+				$pids[] = $parts[0];
+			}
+		}
+		return array_unique($pids);
+	}
+
+	public static function read_disk_vendor($device_path)
+	{
+		$model = self::read_smartctl_info($device_path);
+		if(isset($model['model']))
+		{
+			// Try to extract first word
+			$parts = explode(' ', $model['model']);
+			return $parts[0];
+		}
+		return null;
+	}
+
+	public static function read_partition_label($mount_point)
+	{
+		// On Haiku mount points usually match volume name
+		return basename($mount_point);
+	}
+
+	public static function read_filesystem_block_size($mount_point = '/')
+	{
+		// stat -c %S or %k
+		if(pts_client::executable_in_path('stat'))
+		{
+			$out = shell_exec('stat -c %S ' . escapeshellarg($mount_point) . ' 2>&1');
+			if(is_numeric(trim($out))) return trim($out);
+		}
+		return 4096;
+	}
+
+	public static function read_swap_total_size()
+	{
+		// From top or sysinfo
+		// read_swap_usage returns used.
+		// Need total.
+		$top = shell_exec('top -n 1 2>&1');
+		if(preg_match('/Swap:\s+([0-9]+)\s+([A-Z]+)\s+total/', $top, $matches))
+		{
+			// Convert to MB
+			$val = $matches[1];
+			$unit = $matches[2];
+			if($unit == 'GB' || $unit == 'GIB') $val *= 1024;
+			elseif($unit == 'KB' || $unit == 'KIB') $val /= 1024;
+			return round($val);
+		}
+		return -1;
+	}
+
+	public static function read_swap_free_size()
+	{
+		$top = shell_exec('top -n 1 2>&1');
+		if(preg_match('/Swap:.*?\s+([0-9]+)\s+([A-Z]+)\s+free/', $top, $matches))
+		{
+			$val = $matches[1];
+			$unit = $matches[2];
+			if($unit == 'GB' || $unit == 'GIB') $val *= 1024;
+			elseif($unit == 'KB' || $unit == 'KIB') $val /= 1024;
+			return round($val);
+		}
+		return -1;
+	}
+
+	public static function read_load_avg_1min()
+	{
+		$loads = self::read_load_avg();
+		if($loads)
+		{
+			$parts = explode(' ', $loads);
+			return $parts[0];
+		}
+		return null;
+	}
+
+	public static function read_load_avg_5min()
+	{
+		$loads = self::read_load_avg();
+		if($loads)
+		{
+			$parts = explode(' ', $loads);
+			return $parts[1];
+		}
+		return null;
+	}
+
+	public static function read_load_avg_15min()
+	{
+		$loads = self::read_load_avg();
+		if($loads)
+		{
+			$parts = explode(' ', $loads);
+			return $parts[2];
+		}
+		return null;
+	}
+
+	public static function read_idle_time()
+	{
+		$uptime = self::read_uptime();
+		// Haiku doesn't report idle time easily like /proc/uptime
+		return null;
+	}
+
+	public static function read_timezone_offset()
+	{
+		return trim(shell_exec('date +%z 2>&1'));
+	}
+
+	public static function read_gpu_vendor_id($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'VGA') !== false || stripos($dev['class'], 'Display') !== false)
+			{
+				if(isset($dev['vendor_id'])) return $dev['vendor_id'];
+			}
+		}
+		return null;
+	}
+
+	public static function read_gpu_device_id_hex($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'VGA') !== false || stripos($dev['class'], 'Display') !== false)
+			{
+				if(isset($dev['device_id'])) return $dev['device_id'];
+			}
+		}
+		return null;
+	}
+
+	public static function read_audio_vendor_id($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'Multimedia') !== false)
+			{
+				if(isset($dev['vendor_id'])) return $dev['vendor_id'];
+			}
+		}
+		return null;
+	}
+
+	public static function read_audio_device_id_hex($listdev_output = null)
+	{
+		$devs = self::read_listdev($listdev_output);
+		foreach($devs as $dev)
+		{
+			if(stripos($dev['class'], 'Multimedia') !== false)
+			{
+				if(isset($dev['device_id'])) return $dev['device_id'];
+			}
+		}
+		return null;
+	}
+
+	public static function read_chassis_lock($dmidecode_output = null)
+	{
+		$out = self::read_dmidecode('chassis', $dmidecode_output);
+		if(preg_match('/Lock: (.*)/', $out, $matches)) return trim($matches[1]);
+		return null;
+	}
+
+	public static function read_bios_address($dmidecode_output = null)
+	{
+		$out = self::read_dmidecode('bios', $dmidecode_output);
+		if(preg_match('/Address: (.*)/', $out, $matches)) return trim($matches[1]);
+		return null;
+	}
+
+	public static function read_system_vendor_uuid($dmidecode_output = null)
+	{
+		return self::read_system_uuid($dmidecode_output);
+	}
+
+	public static function read_baseboard_serial($dmidecode_output = null)
+	{
+		$out = self::read_dmidecode('baseboard', $dmidecode_output);
+		if(preg_match('/Serial Number: (.*)/', $out, $matches)) return trim($matches[1]);
+		return null;
+	}
+
+	public static function read_battery_model_name()
+	{
+		$info = self::read_battery_details();
+		// Re-read for model
+		if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
+		{
+			foreach($b as $battery)
+			{
+				if($battery != '.' && $battery != '..')
+				{
+					$path = '/dev/power/acpi_battery/' . $battery;
+					if(is_file($path . '/model')) return trim(file_get_contents($path . '/model'));
+				}
+			}
+		}
+		return null;
+	}
+
+	public static function read_battery_serial_number()
+	{
+		$info = self::read_battery_details();
+		return isset($info['Serial']) ? $info['Serial'] : null;
+	}
+
 	public static function read_fan_speed($zone = null)
 	{
 		// /dev/power/acpi_thermal/ ...
