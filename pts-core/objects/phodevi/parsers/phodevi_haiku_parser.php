@@ -842,6 +842,308 @@ class phodevi_haiku_parser
 		return $info;
 	}
 
+	public static function read_fan_speed($zone = null)
+	{
+		// /dev/power/acpi_thermal/ ...
+		return -1; // Not generally exposed via simple file yet on Haiku
+	}
+
+	public static function read_voltage($component = null)
+	{
+		return -1; // Not generally exposed
+	}
+
+	public static function read_power_consumption()
+	{
+		return -1;
+	}
+
+	public static function read_motherboard_info($dmidecode_output = null)
+	{
+		$info = array();
+		$output = self::read_dmidecode('baseboard', $dmidecode_output);
+
+		if(preg_match('/Manufacturer: (.*)/', $output, $matches)) $info['Manufacturer'] = trim($matches[1]);
+		if(preg_match('/Product Name: (.*)/', $output, $matches)) $info['Product'] = trim($matches[1]);
+		if(preg_match('/Version: (.*)/', $output, $matches)) $info['Version'] = trim($matches[1]);
+		if(preg_match('/Serial Number: (.*)/', $output, $matches)) $info['Serial'] = trim($matches[1]);
+		if(preg_match('/Asset Tag: (.*)/', $output, $matches)) $info['Asset Tag'] = trim($matches[1]);
+
+		return $info;
+	}
+
+	public static function read_kernel_arch()
+	{
+		return trim(shell_exec('uname -m 2>&1'));
+	}
+
+	public static function read_kernel_build_user()
+	{
+		// Often in uname -v or sysinfo
+		$v = php_uname('v');
+		if(preg_match('/(.*) @ (.*)/', $v, $matches))
+		{
+			return trim($matches[1]); // Build user/host
+		}
+		return null;
+	}
+
+	public static function read_kernel_compiler()
+	{
+		// e.g. GCC 11.2.0
+		$sysinfo = self::read_sysinfo('kernel_release');
+		// Not typically in release string, check sysinfo output generally?
+		// For now return null or try to guess from gcc -v
+		return null;
+	}
+
+	public static function read_install_date()
+	{
+		// Haiku doesn't have a definitive install date file standard like some Linux distros
+		// Could check creation time of /boot/system
+		if(file_exists('/boot/system'))
+		{
+			return date('Y-m-d', filectime('/boot/system'));
+		}
+		return null;
+	}
+
+	public static function read_hostname()
+	{
+		return trim(shell_exec('hostname 2>&1'));
+	}
+
+	public static function read_pci_express_slots($dmidecode_output = null)
+	{
+		$slots = array();
+		$output = self::read_dmidecode('slot', $dmidecode_output);
+		$lines = explode("\n", $output);
+		$current_slot = array();
+
+		foreach($lines as $line)
+		{
+			$line = trim($line);
+			if(strpos($line, 'System Slot Information') === 0)
+			{
+				if(!empty($current_slot)) $slots[] = $current_slot;
+				$current_slot = array();
+			}
+			else if(strpos($line, 'Designation:') === 0) $current_slot['Designation'] = trim(substr($line, 12));
+			else if(strpos($line, 'Type:') === 0) $current_slot['Type'] = trim(substr($line, 5));
+			else if(strpos($line, 'Current Usage:') === 0) $current_slot['Usage'] = trim(substr($line, 14));
+		}
+		if(!empty($current_slot)) $slots[] = $current_slot;
+		return $slots;
+	}
+
+	public static function read_usb_controllers($listdev_output = null)
+	{
+		$controllers = array();
+		$devices = self::read_listdev($listdev_output);
+		foreach($devices as $dev)
+		{
+			if(stripos($dev['class'], 'USB controller') !== false)
+			{
+				// Clean up class string if it has [a|b|c] suffix
+				if(($p = strpos($dev['class'], ' [')) !== false)
+				{
+					$dev['class'] = substr($dev['class'], 0, $p);
+				}
+				$controllers[] = $dev;
+			}
+		}
+		return $controllers;
+	}
+
+	public static function read_usb_devices($listdev_output = null)
+	{
+		// USB devices often show up in listdev under USB class or similar
+		// This is a rough approximation as listdev focuses on PCI usually
+		// `lsusb` is the better tool if available
+		if(pts_client::executable_in_path('lsusb'))
+		{
+			$lsusb = shell_exec('lsusb 2>&1');
+			// Parse lsusb
+			// Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+			$usb_devs = array();
+			foreach(explode("\n", $lsusb) as $line)
+			{
+				if(preg_match('/ID ([0-9a-fA-F:]+) (.*)/', $line, $matches))
+				{
+					$usb_devs[] = array('ID' => $matches[1], 'Name' => trim($matches[2]));
+				}
+			}
+			return $usb_devs;
+		}
+		return array();
+	}
+
+	public static function read_i2c_devices()
+	{
+		// `i2cdetect` equivalent?
+		return array();
+	}
+
+	public static function read_input_devices()
+	{
+		// Check /dev/input
+		$devices = array();
+		if(is_dir('/dev/input'))
+		{
+			foreach(scandir('/dev/input') as $d)
+			{
+				if($d != '.' && $d != '..') $devices[] = $d;
+			}
+		}
+		return $devices;
+	}
+
+	public static function read_screen_resolution()
+	{
+		if(pts_client::executable_in_path('screenmode'))
+		{
+			$mode = trim(shell_exec('screenmode 2>&1'));
+			// 1920 1080 32 60
+			if(preg_match('/([0-9]+) ([0-9]+) [0-9]+ [0-9\.]+/', $mode, $matches))
+			{
+				return $matches[1] . 'x' . $matches[2];
+			}
+		}
+		return null;
+	}
+
+	public static function read_screen_dimensions()
+	{
+		return self::read_screen_resolution(); // Same for now
+	}
+
+	public static function read_gpu_memory()
+	{
+		// Difficult to get standardly on Haiku without specific driver info
+		return null;
+	}
+
+	public static function read_opengl_version()
+	{
+		// glxinfo not native, but maybe available
+		if(pts_client::executable_in_path('glxinfo'))
+		{
+			$out = shell_exec('glxinfo 2>&1');
+			if(preg_match('/OpenGL version string: (.*)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_vulkan_version()
+	{
+		if(pts_client::executable_in_path('vulkaninfo'))
+		{
+			$out = shell_exec('vulkaninfo 2>&1');
+			if(preg_match('/Vulkan Instance Version: (.*)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_mount_points()
+	{
+		$mounts = array();
+		$out = shell_exec('mount 2>&1');
+		// /dev/disk/... on / type bfs (rw)
+		foreach(explode("\n", $out) as $line)
+		{
+			if(preg_match('#(.*?) on (.*?) type (.*?) \((.*?)\)#', $line, $matches))
+			{
+				$mounts[] = array(
+					'Device' => $matches[1],
+					'MountPoint' => $matches[2],
+					'Type' => $matches[3],
+					'Options' => $matches[4]
+				);
+			}
+		}
+		return $mounts;
+	}
+
+	public static function read_fs_type($mount_point)
+	{
+		$mounts = self::read_mount_points();
+		foreach($mounts as $m)
+		{
+			if($m['MountPoint'] == $mount_point) return $m['Type'];
+		}
+		return null;
+	}
+
+	public static function read_fs_options($mount_point)
+	{
+		$mounts = self::read_mount_points();
+		foreach($mounts as $m)
+		{
+			if($m['MountPoint'] == $mount_point) return $m['Options'];
+		}
+		return null;
+	}
+
+	public static function read_swap_devices()
+	{
+		// Can infer from virtual memory settings or file presence, typically managed by system
+		// Not explicitly listed like /proc/swaps
+		return array();
+	}
+
+	public static function read_open_files_count()
+	{
+		// lsof equivalent?
+		return -1;
+	}
+
+	public static function read_process_list()
+	{
+		$list = array();
+		$ps = shell_exec('ps 2>&1');
+		$lines = explode("\n", $ps);
+		array_shift($lines); // header
+		foreach($lines as $line)
+		{
+			// team  thread  name
+			// 123   123     init
+			$parts = preg_split('/\s+/', trim($line));
+			if(count($parts) >= 3)
+			{
+				// Last part is name, usually
+				$list[] = end($parts);
+			}
+		}
+		return array_unique($list);
+	}
+
+	public static function read_process_memory($process_name)
+	{
+		// Not easily extractable from standard `ps` on Haiku without arguments
+		return -1;
+	}
+
+	public static function read_process_cpu($process_name)
+	{
+		return -1;
+	}
+
+	public static function read_uptime_seconds()
+	{
+		return self::read_uptime();
+	}
+
+	public static function read_users_logged_in()
+	{
+		return trim(shell_exec('who | wc -l 2>&1'));
+	}
+
 	private static function byte_format($bytes)
 	{
 		if($bytes > 1073741824)
