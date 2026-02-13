@@ -39,7 +39,7 @@ class phodevi_haiku_parser
 		{
 			if(($dmidecode = pts_client::executable_in_path('dmidecode')) != false)
 			{
-				$output = shell_exec($dmidecode . ' -t ' . $type . ' 2>&1');
+				$output = shell_exec($dmidecode . ' -t ' . escapeshellarg($type) . ' 2>&1');
 				$dmidecode_cache[$type] = $output;
 			}
 			else
@@ -840,6 +840,480 @@ class phodevi_haiku_parser
 		// Placeholder for EDID parsing logic if hex dump is available
 		// For now just basic check
 		return $info;
+	}
+
+	public static function read_screen_refresh_rate()
+	{
+		// 1920 1080 32 60
+		if(pts_client::executable_in_path('screenmode'))
+		{
+			$mode = trim(shell_exec('screenmode 2>&1'));
+			if(preg_match('/[0-9]+ [0-9]+ [0-9]+ ([0-9\.]+)/', $mode, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_screen_color_depth()
+	{
+		// 1920 1080 32 60
+		if(pts_client::executable_in_path('screenmode'))
+		{
+			$mode = trim(shell_exec('screenmode 2>&1'));
+			if(preg_match('/[0-9]+ [0-9]+ ([0-9]+) [0-9\.]+/', $mode, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_memory_max_capacity($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('memory', $dmidecode_output);
+		if(preg_match('/Maximum Capacity: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_memory_slots_used($dmidecode_output = null)
+	{
+		$count = 0;
+		$modules = self::read_memory_modules($dmidecode_output);
+		foreach($modules as $mod)
+		{
+			if(isset($mod['Size']) && stripos($mod['Size'], 'No Module') === false)
+			{
+				$count++;
+			}
+		}
+		return $count;
+	}
+
+	public static function read_memory_slots_free($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('memory', $dmidecode_output);
+		if(preg_match('/Number Of Devices: ([0-9]+)/', $output, $matches))
+		{
+			$total = intval($matches[1]);
+			$used = self::read_memory_slots_used($dmidecode_output);
+			return max(0, $total - $used);
+		}
+		return null;
+	}
+
+	public static function read_chassis_height($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('chassis', $dmidecode_output);
+		if(preg_match('/Height: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_chassis_cords($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('chassis', $dmidecode_output);
+		if(preg_match('/Number Of Power Cords: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_bios_rom_size($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('bios', $dmidecode_output);
+		if(preg_match('/ROM Size: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_bios_characteristics($dmidecode_output = null)
+	{
+		$chars = array();
+		$output = self::read_dmidecode('bios', $dmidecode_output);
+		$lines = explode("\n", $output);
+		$in_section = false;
+		foreach($lines as $line)
+		{
+			if(strpos($line, 'Characteristics:') !== false)
+			{
+				$in_section = true;
+			}
+			else if($in_section)
+			{
+				if(strpos($line, "\t\t") === 0)
+				{
+					$chars[] = trim($line);
+				}
+				else
+				{
+					$in_section = false;
+				}
+			}
+		}
+		return $chars;
+	}
+
+	public static function read_processor_voltage($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('processor', $dmidecode_output);
+		if(preg_match('/Voltage: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_processor_status($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('processor', $dmidecode_output);
+		if(preg_match('/Status: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_processor_upgrade($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('processor', $dmidecode_output);
+		if(preg_match('/Upgrade: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_cache_associativity($dmidecode_output = null)
+	{
+		$info = array('L1' => null, 'L2' => null, 'L3' => null);
+		$output = self::read_dmidecode('cache', $dmidecode_output);
+		$lines = explode("\n", $output);
+		$current_level = null;
+
+		foreach($lines as $line)
+		{
+			if(strpos($line, 'Configuration:') !== false)
+			{
+				if(strpos($line, 'Level 1') !== false) $current_level = 'L1';
+				else if(strpos($line, 'Level 2') !== false) $current_level = 'L2';
+				else if(strpos($line, 'Level 3') !== false) $current_level = 'L3';
+			}
+			else if($current_level && strpos($line, 'Associativity:') !== false)
+			{
+				$assoc = trim(substr($line, strpos($line, ':') + 1));
+				$info[$current_level] = $assoc;
+				$current_level = null;
+			}
+		}
+		return $info;
+	}
+
+	public static function read_port_connectors($dmidecode_output = null)
+	{
+		$ports = array();
+		$output = self::read_dmidecode('connector', $dmidecode_output);
+		$lines = explode("\n", $output);
+		$current_port = array();
+
+		foreach($lines as $line)
+		{
+			if(strpos($line, 'Port Connector Information') === 0)
+			{
+				if(!empty($current_port)) $ports[] = $current_port;
+				$current_port = array();
+			}
+			else if(strpos($line, 'Internal Reference Designator:') !== false)
+			{
+				$current_port['Internal'] = trim(substr($line, strpos($line, ':') + 1));
+			}
+			else if(strpos($line, 'External Reference Designator:') !== false)
+			{
+				$current_port['External'] = trim(substr($line, strpos($line, ':') + 1));
+			}
+			else if(strpos($line, 'Port Type:') !== false)
+			{
+				$current_port['Type'] = trim(substr($line, strpos($line, ':') + 1));
+			}
+		}
+		if(!empty($current_port)) $ports[] = $current_port;
+		return $ports;
+	}
+
+	public static function read_system_boot_status($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('system', $dmidecode_output);
+		if(preg_match('/Boot-up State: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_onboard_devices($dmidecode_output = null)
+	{
+		$devices = array();
+		$output = self::read_dmidecode('baseboard', $dmidecode_output);
+		$lines = explode("\n", $output);
+		foreach($lines as $line)
+		{
+			if(preg_match('/On Board Device [0-9]+ Information/', $line))
+			{
+				// Handle older DMI type 10
+			}
+			else if(preg_match('/Description: (.*)/', $line, $matches))
+			{
+				$devices[] = trim($matches[1]); // From Type 41
+			}
+		}
+		return $devices;
+	}
+
+	public static function read_oem_strings($dmidecode_output = null)
+	{
+		$strings = array();
+		$output = self::read_dmidecode('11', $dmidecode_output); // Type 11
+		$lines = explode("\n", $output);
+		foreach($lines as $line)
+		{
+			if(preg_match('/String [0-9]+: (.*)/', $line, $matches))
+			{
+				$strings[] = trim($matches[1]);
+			}
+		}
+		return $strings;
+	}
+
+	public static function read_system_config_options($dmidecode_output = null)
+	{
+		$options = array();
+		$output = self::read_dmidecode('12', $dmidecode_output); // Type 12
+		$lines = explode("\n", $output);
+		foreach($lines as $line)
+		{
+			if(preg_match('/Option [0-9]+: (.*)/', $line, $matches))
+			{
+				$options[] = trim($matches[1]);
+			}
+		}
+		return $options;
+	}
+
+	public static function read_gateway()
+	{
+		if(($route = pts_client::executable_in_path('route')))
+		{
+			$out = shell_exec($route . ' 2>&1');
+			// default         192.168.1.1     UG    0      0        0  ipro1000/0
+			if(preg_match('/default\s+([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_dns_servers()
+	{
+		$dns = array();
+		if(is_readable('/etc/resolv.conf'))
+		{
+			$lines = file('/etc/resolv.conf');
+			foreach($lines as $line)
+			{
+				if(preg_match('/nameserver\s+([0-9\.]+)/', $line, $matches))
+				{
+					$dns[] = $matches[1];
+				}
+			}
+		}
+		return $dns;
+	}
+
+	public static function read_ipv6_address($ifconfig_output = null)
+	{
+		$ifconfig_output = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match('/inet6 addr: ([0-9a-fA-F:]+)/', $ifconfig_output, $matches))
+		{
+			return $matches[1];
+		}
+		return null;
+	}
+
+	public static function read_open_ports($netstat_output = null)
+	{
+		$ports = array();
+		$netstat_output = $netstat_output == null ? shell_exec('netstat -an 2>&1') : $netstat_output;
+		$lines = explode("\n", $netstat_output);
+		foreach($lines as $line)
+		{
+			// tcp        0      0  0.0.0.0:22            0.0.0.0:*             LISTEN
+			if(preg_match('/(tcp|udp).*?:([0-9]+)\s/', $line, $matches))
+			{
+				$ports[] = $matches[2];
+			}
+		}
+		return array_unique($ports);
+	}
+
+	public static function read_packages_count()
+	{
+		if(is_dir('/boot/system/packages'))
+		{
+			// Basic count of activated packages
+			return count(scandir('/boot/system/packages')) - 2;
+		}
+		return -1;
+	}
+
+	public static function read_kext_loaded()
+	{
+		$kexts = array();
+		if(pts_client::executable_in_path('listimage'))
+		{
+			$out = shell_exec('listimage 2>&1');
+			// Lists images loaded by team. Kernel team is usually 1.
+			// Ideally filter for kernel add-ons.
+			// Just returning raw list count or parsing could be enough.
+			$lines = explode("\n", $out);
+			foreach($lines as $line)
+			{
+				if(strpos($line, '/add-ons/kernel') !== false)
+				{
+					$parts = explode('/', trim($line));
+					$kexts[] = end($parts);
+				}
+			}
+		}
+		return array_unique($kexts);
+	}
+
+	public static function read_kernel_cmdline()
+	{
+		// /bin/kernel_args is not standardly dumped to text file
+		// sysinfo might have it?
+		return null;
+	}
+
+	public static function read_boot_time()
+	{
+		$uptime = self::read_uptime();
+		if($uptime > 0)
+		{
+			return time() - $uptime;
+		}
+		return null;
+	}
+
+	public static function read_filesystem_inodes($mount_point = '/')
+	{
+		// df -i usually works
+		$df = shell_exec('df -i ' . escapeshellarg($mount_point) . ' 2>&1');
+		// Filesystem      Inodes  IUsed   IFree IUse% Mounted on
+		// /dev/disk/...   ...     ...     ...   ...   /
+		$lines = explode("\n", $df);
+		foreach($lines as $line)
+		{
+			if(preg_match('/' . preg_quote($mount_point, '/') . '$/', $line))
+			{
+				$parts = preg_split('/\s+/', trim($line));
+				// Assuming standard df -i column layout if supported
+				if(count($parts) >= 5 && is_numeric($parts[1]))
+				{
+					return array('Total' => $parts[1], 'Used' => $parts[2], 'Free' => $parts[3]);
+				}
+			}
+		}
+		return null;
+	}
+
+	public static function read_audio_details($listdev_output = null)
+	{
+		$audio = array();
+		$devices = self::read_listdev($listdev_output);
+		foreach($devices as $dev)
+		{
+			if(stripos($dev['class'], 'Multimedia audio controller') !== false || stripos($dev['class'], 'Audio device') !== false)
+			{
+				$audio[] = $dev;
+			}
+		}
+		return $audio;
+	}
+
+	public static function read_input_devices_detailed()
+	{
+		// /dev/input/keyboard/usb/0, /dev/input/mouse/usb/0
+		$inputs = array();
+		foreach(array('keyboard', 'mouse', 'touchpad') as $type)
+		{
+			if(is_dir('/dev/input/' . $type))
+			{
+				$inputs[$type] = array(); // Populate if deeper scan needed
+				// For now just existence
+				$inputs[$type] = 'Present';
+			}
+		}
+		return $inputs;
+	}
+
+	public static function read_printers()
+	{
+		$printers = array();
+		if(is_dir('/dev/printer/usb'))
+		{
+			$printers = scandir('/dev/printer/usb');
+			$printers = array_diff($printers, array('.', '..'));
+		}
+		return $printers;
+	}
+
+	public static function read_pci_bandwidth($listdev_output = null)
+	{
+		// Not easily parsing bandwidth from listdev output
+		return null;
+	}
+
+	public static function read_running_services()
+	{
+		// querying launch_daemon?
+		// launch_roster list
+		if(pts_client::executable_in_path('launch_roster'))
+		{
+			$out = shell_exec('launch_roster list 2>&1');
+			// Parse logic here
+			// Returns raw string for now
+			return $out;
+		}
+		return null;
+	}
+
+	public static function read_zombie_processes()
+	{
+		// ps output usually doesn't clearly mark zombies in Haiku's standard ps
+		return -1;
+	}
+
+	public static function read_uptime_since()
+	{
+		return self::read_boot_time();
+	}
+
+	public static function read_users_groups()
+	{
+		// /etc/passwd, /etc/group
+		$users = is_readable('/etc/passwd') ? count(file('/etc/passwd')) : -1;
+		$groups = is_readable('/etc/group') ? count(file('/etc/group')) : -1;
+		return array('Users' => $users, 'Groups' => $groups);
 	}
 
 	public static function read_fan_speed($zone = null)
