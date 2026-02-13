@@ -23,6 +23,34 @@
 
 class phodevi_haiku_parser
 {
+	public static function read_dmidecode($type, $dmidecode_output = null)
+	{
+		static $dmidecode_cache = array();
+
+		if($dmidecode_output != null)
+		{
+			$output = $dmidecode_output;
+		}
+		elseif(isset($dmidecode_cache[$type]))
+		{
+			$output = $dmidecode_cache[$type];
+		}
+		else
+		{
+			if(($dmidecode = pts_client::executable_in_path('dmidecode')) != false)
+			{
+				$output = shell_exec($dmidecode . ' -t ' . $type . ' 2>&1');
+				$dmidecode_cache[$type] = $output;
+			}
+			else
+			{
+				$output = '';
+			}
+		}
+
+		return $output;
+	}
+
 	public static function read_sysinfo($info, $sysinfo_output = null)
 	{
 		static $sysinfo_cache = null;
@@ -93,7 +121,11 @@ class phodevi_haiku_parser
 				}
 				break;
 			case 'kernel_release':
-				if(preg_match('/Kernel: Haiku (.*)/', $sysinfo, $matches))
+				if(preg_match('/Kernel: Haiku (.*?) \(/', $sysinfo, $matches))
+				{
+					$return = $matches[1];
+				}
+				else if(preg_match('/Kernel: Haiku (.*)/', $sysinfo, $matches))
 				{
 					$return = trim($matches[1]);
 				}
@@ -545,6 +577,269 @@ class phodevi_haiku_parser
 			}
 		}
 		return -1;
+	}
+
+	public static function read_memory_modules($dmidecode_output = null)
+	{
+		$modules = array();
+		$output = self::read_dmidecode('memory', $dmidecode_output);
+		$lines = explode("\n", $output);
+		$current_module = array();
+
+		foreach($lines as $line)
+		{
+			$line = trim($line);
+			if(strpos($line, 'Memory Device') === 0)
+			{
+				if(!empty($current_module))
+				{
+					$modules[] = $current_module;
+				}
+				$current_module = array();
+			}
+			else if(strpos($line, ':') !== false)
+			{
+				list($key, $value) = explode(':', $line, 2);
+				$key = trim($key);
+				$value = trim($value);
+
+				switch($key)
+				{
+					case 'Size':
+						$current_module['Size'] = $value;
+						break;
+					case 'Type':
+						$current_module['Type'] = $value;
+						break;
+					case 'Speed':
+						$current_module['Speed'] = $value;
+						break;
+					case 'Manufacturer':
+						$current_module['Manufacturer'] = $value;
+						break;
+					case 'Serial Number':
+						$current_module['Serial'] = $value;
+						break;
+					case 'Part Number':
+						$current_module['Part Number'] = $value;
+						break;
+				}
+			}
+		}
+		if(!empty($current_module))
+		{
+			$modules[] = $current_module;
+		}
+		return $modules;
+	}
+
+	public static function read_chassis_info($dmidecode_output = null)
+	{
+		$info = array();
+		$output = self::read_dmidecode('chassis', $dmidecode_output);
+
+		if(preg_match('/Manufacturer: (.*)/', $output, $matches))
+		{
+			$info['Manufacturer'] = trim($matches[1]);
+		}
+		if(preg_match('/Type: (.*)/', $output, $matches))
+		{
+			$info['Type'] = trim($matches[1]);
+		}
+		if(preg_match('/Serial Number: (.*)/', $output, $matches))
+		{
+			$info['Serial'] = trim($matches[1]);
+		}
+		if(preg_match('/Asset Tag: (.*)/', $output, $matches))
+		{
+			$info['Asset Tag'] = trim($matches[1]);
+		}
+
+		return $info;
+	}
+
+	public static function read_bios_info($dmidecode_output = null)
+	{
+		$info = array();
+		$output = self::read_dmidecode('bios', $dmidecode_output);
+
+		if(preg_match('/Vendor: (.*)/', $output, $matches))
+		{
+			$info['Vendor'] = trim($matches[1]);
+		}
+		if(preg_match('/Version: (.*)/', $output, $matches))
+		{
+			$info['Version'] = trim($matches[1]);
+		}
+		if(preg_match('/Release Date: (.*)/', $output, $matches))
+		{
+			$info['Release Date'] = trim($matches[1]);
+		}
+
+		return $info;
+	}
+
+	public static function read_processor_info($dmidecode_output = null)
+	{
+		$info = array();
+		$output = self::read_dmidecode('processor', $dmidecode_output);
+
+		if(preg_match('/Family: (.*)/', $output, $matches))
+		{
+			$info['Family'] = trim($matches[1]);
+		}
+		if(preg_match('/Manufacturer: (.*)/', $output, $matches))
+		{
+			$info['Manufacturer'] = trim($matches[1]);
+		}
+		if(preg_match('/Version: (.*)/', $output, $matches))
+		{
+			$info['Version'] = trim($matches[1]);
+		}
+		if(preg_match('/Core Count: (.*)/', $output, $matches))
+		{
+			$info['Core Count'] = trim($matches[1]);
+		}
+		if(preg_match('/Thread Count: (.*)/', $output, $matches))
+		{
+			$info['Thread Count'] = trim($matches[1]);
+		}
+
+		return $info;
+	}
+
+	public static function read_cache_info($dmidecode_output = null)
+	{
+		$info = array('L1' => null, 'L2' => null, 'L3' => null);
+		$output = self::read_dmidecode('cache', $dmidecode_output);
+		$lines = explode("\n", $output);
+		$current_level = null;
+
+		foreach($lines as $line)
+		{
+			if(strpos($line, 'Configuration:') !== false)
+			{
+				if(strpos($line, 'Level 1') !== false) $current_level = 'L1';
+				else if(strpos($line, 'Level 2') !== false) $current_level = 'L2';
+				else if(strpos($line, 'Level 3') !== false) $current_level = 'L3';
+			}
+			else if($current_level && strpos($line, 'Installed Size:') !== false)
+			{
+				$size = trim(substr($line, strpos($line, ':') + 1));
+				$info[$current_level] = $size;
+				$current_level = null;
+			}
+		}
+
+		return $info;
+	}
+
+	public static function read_battery_details()
+	{
+		$info = array();
+		if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
+		{
+			foreach($b as $battery)
+			{
+				if($battery != '.' && $battery != '..')
+				{
+					$path = '/dev/power/acpi_battery/' . $battery;
+					if(is_file($path . '/technology'))
+					{
+						$info['Technology'] = trim(file_get_contents($path . '/technology'));
+					}
+					if(is_file($path . '/serial_number'))
+					{
+						$info['Serial'] = trim(file_get_contents($path . '/serial_number'));
+					}
+					if(is_file($path . '/voltage'))
+					{
+						$info['Voltage'] = trim(file_get_contents($path . '/voltage'));
+					}
+					break; // Just get first battery for now
+				}
+			}
+		}
+		return $info;
+	}
+
+	public static function read_network_status($ifconfig_output = null)
+	{
+		$info = array('Speed' => null, 'Duplex' => null);
+		// Assuming ifconfig format might contain media line for some drivers
+		// media: Ethernet autoselect (1000baseT <full-duplex>)
+		$ifconfig_output = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+
+		if(preg_match('/media: .*? \((.*?)\)/', $ifconfig_output, $matches))
+		{
+			$media = $matches[1];
+			if(strpos($media, '1000base') !== false) $info['Speed'] = '1000Mbps';
+			else if(strpos($media, '100base') !== false) $info['Speed'] = '100Mbps';
+			else if(strpos($media, '10base') !== false) $info['Speed'] = '10Mbps';
+			else if(strpos($media, '10Gbase') !== false) $info['Speed'] = '10000Mbps';
+
+			if(strpos($media, 'full-duplex') !== false) $info['Duplex'] = 'Full';
+			else if(strpos($media, 'half-duplex') !== false) $info['Duplex'] = 'Half';
+		}
+		return $info;
+	}
+
+	public static function read_drive_details($device_path)
+	{
+		$info = array();
+		if(pts_client::executable_in_path('smartctl'))
+		{
+			$output = shell_exec('smartctl -i ' . escapeshellarg($device_path) . ' 2>&1');
+			if(preg_match('/Firmware Version:\s+(.*)/', $output, $matches))
+			{
+				$info['Firmware'] = trim($matches[1]);
+			}
+			if(preg_match('/User Capacity:\s+(.*)/', $output, $matches))
+			{
+				$info['Capacity'] = trim($matches[1]);
+			}
+		}
+		return $info;
+	}
+
+	public static function read_process_count($ps_output = null)
+	{
+		$ps_output = $ps_output == null ? shell_exec('ps 2>&1') : $ps_output;
+		// Subtract header
+		return max(0, substr_count($ps_output, "\n") - 1);
+	}
+
+	public static function read_thread_count($ps_output = null)
+	{
+		// Haiku ps lists threads (teams/threads)
+		$ps_output = $ps_output == null ? shell_exec('ps 2>&1') : $ps_output;
+		return max(0, substr_count($ps_output, "\n") - 1);
+	}
+
+	public static function read_load_avg()
+	{
+		// uptime: 1d 2h 30m 10s, load average: 0.00, 0.00, 0.00
+		$uptime = shell_exec('uptime 2>&1');
+		if(preg_match('/load average:\s+([0-9\.]+),\s+([0-9\.]+),\s+([0-9\.]+)/', $uptime, $matches))
+		{
+			return $matches[1] . ' ' . $matches[2] . ' ' . $matches[3];
+		}
+		return null;
+	}
+
+	public static function read_timezone()
+	{
+		return trim(shell_exec('date +%Z 2>&1'));
+	}
+
+	public static function read_monitor_details()
+	{
+		$info = array();
+		// Try to parse EDID from syslog or get_edid
+		$edid_hex = shell_exec('get_edid 2>&1');
+		// Placeholder for EDID parsing logic if hex dump is available
+		// For now just basic check
+		return $info;
 	}
 
 	private static function byte_format($bytes)
