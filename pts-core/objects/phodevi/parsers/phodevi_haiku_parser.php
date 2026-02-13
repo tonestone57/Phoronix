@@ -298,8 +298,8 @@ class phodevi_haiku_parser
 
 	public static function read_disk_info($df_output = null, $mount_output = null)
 	{
-		// Use df
-		$df_output = $df_output == null ? shell_exec('df -h 2>&1') : $df_output;
+		// Use df -k to ensure numeric output in KiB
+		$df_output = $df_output == null ? shell_exec('df -k 2>&1') : $df_output;
 		$filesystems = array();
 
 		// Check for Haiku df format
@@ -330,11 +330,12 @@ class phodevi_haiku_parser
 					$mount_point = $parts[0];
 					$device = isset($mount_map[$mount_point]) ? $mount_map[$mount_point] : $mount_point;
 
+					// df -k outputs in KiB, convert to GB/MB string
 					$filesystems[] = array(
 						'filesystem' => $device,
-						'size' => $parts[2],
-						'used' => $parts[3],
-						'avail' => $parts[4],
+						'size' => pts_size::byte_format($parts[2] * 1024),
+						'used' => pts_size::byte_format($parts[3] * 1024),
+						'avail' => pts_size::byte_format($parts[4] * 1024),
 						'use_percent' => 'N/A',
 						'mount' => $mount_point
 					);
