@@ -1618,6 +1618,386 @@ class phodevi_haiku_parser
 		return trim(shell_exec('who | wc -l 2>&1'));
 	}
 
+	public static function read_gcc_version()
+	{
+		if(($gcc = pts_client::executable_in_path('gcc')) != false)
+		{
+			return trim(shell_exec($gcc . ' -dumpversion 2>&1'));
+		}
+		return null;
+	}
+
+	public static function read_python_version()
+	{
+		if(($py = pts_client::executable_in_path('python')) != false)
+		{
+			$out = shell_exec($py . ' --version 2>&1');
+			// Python 3.9.1
+			return trim(str_replace('Python ', '', $out));
+		}
+		return null;
+	}
+
+	public static function read_perl_version()
+	{
+		if(($perl = pts_client::executable_in_path('perl')) != false)
+		{
+			$out = shell_exec($perl . ' -v 2>&1');
+			if(preg_match('/v([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_ruby_version()
+	{
+		if(($ruby = pts_client::executable_in_path('ruby')) != false)
+		{
+			$out = shell_exec($ruby . ' -v 2>&1');
+			if(preg_match('/ruby ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_php_version()
+	{
+		if(($php = pts_client::executable_in_path('php')) != false)
+		{
+			$out = shell_exec($php . ' -v 2>&1');
+			if(preg_match('/PHP ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_java_version()
+	{
+		if(($java = pts_client::executable_in_path('java')) != false)
+		{
+			$out = shell_exec($java . ' -version 2>&1');
+			if(preg_match('/"([0-9\._]+)"/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_go_version()
+	{
+		if(($go = pts_client::executable_in_path('go')) != false)
+		{
+			$out = shell_exec($go . ' version 2>&1');
+			if(preg_match('/go([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_rust_version()
+	{
+		if(($rust = pts_client::executable_in_path('rustc')) != false)
+		{
+			$out = shell_exec($rust . ' --version 2>&1');
+			if(preg_match('/rustc ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_git_version()
+	{
+		if(($git = pts_client::executable_in_path('git')) != false)
+		{
+			$out = shell_exec($git . ' --version 2>&1');
+			if(preg_match('/git version ([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_fpc_version()
+	{
+		if(($fpc = pts_client::executable_in_path('fpc')) != false)
+		{
+			$out = shell_exec($fpc . ' -iV 2>&1');
+			if(preg_match('/([0-9\.]+)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_network_packets_rx($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/RX packets:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_packets_tx($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/TX packets:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_bytes_rx($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/RX bytes:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_bytes_tx($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/TX bytes:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_errors_rx($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/RX errors:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_errors_tx($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/TX errors:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_collisions($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/collisions:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_network_drops($ifconfig_output = null)
+	{
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		if(preg_match_all('/dropped:([0-9]+)/', $out, $matches))
+		{
+			return array_sum($matches[1]);
+		}
+		return 0;
+	}
+
+	public static function read_system_uuid($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('system', $dmidecode_output);
+		if(preg_match('/UUID: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_system_wakeup_type($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('system', $dmidecode_output);
+		if(preg_match('/Wake-up Type: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_system_sku($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('system', $dmidecode_output);
+		if(preg_match('/SKU Number: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_system_family($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('system', $dmidecode_output);
+		if(preg_match('/Family: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_baseboard_location($dmidecode_output = null)
+	{
+		$output = self::read_dmidecode('baseboard', $dmidecode_output);
+		if(preg_match('/Location In Chassis: (.*)/', $output, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
+	}
+
+	public static function read_process_highest_cpu($top_output = null)
+	{
+		// Haiku top format is unique, simple parse highest based on sort if possible
+		// Or stub for now as top parsing needs detailed state tracking
+		return null;
+	}
+
+	public static function read_process_highest_mem($top_output = null)
+	{
+		return null;
+	}
+
+	public static function read_filesystem_total_size()
+	{
+		$total = 0;
+		$df = self::read_disk_info();
+		foreach($df as $d)
+		{
+			if(isset($d['size']))
+			{
+				$size = $d['size'];
+				// Convert back to bytes for summing? Or just return primary disk size?
+				// This is tricky without a converter.
+				// Actually read_disk_info returns formatted strings.
+				// We need raw data.
+			}
+		}
+		return null; // Requires raw data refactor
+	}
+
+	public static function read_filesystem_used_size()
+	{
+		return null;
+	}
+
+	public static function read_filesystem_free_size()
+	{
+		return null;
+	}
+
+	public static function read_keyboard_details()
+	{
+		$devs = self::read_input_devices_detailed();
+		return isset($devs['keyboard']) ? $devs['keyboard'] : null;
+	}
+
+	public static function read_mouse_details()
+	{
+		$devs = self::read_input_devices_detailed();
+		return isset($devs['mouse']) ? $devs['mouse'] : null;
+	}
+
+	public static function read_joystick_details()
+	{
+		$devs = array();
+		if(is_dir('/dev/input/joystick'))
+		{
+			foreach(scandir('/dev/input/joystick') as $d)
+			{
+				if($d != '.' && $d != '..') $devs[] = $d;
+			}
+		}
+		return $devs;
+	}
+
+	public static function read_cpu_temp_max()
+	{
+		return self::read_thermal_zone();
+	}
+
+	public static function read_cpu_temp_avg()
+	{
+		return self::read_thermal_zone();
+	}
+
+	public static function read_system_temp_avg()
+	{
+		return self::read_thermal_zone();
+	}
+
+	public static function read_gpu_temp_avg()
+	{
+		return -1;
+	}
+
+	public static function read_user_environment_vars()
+	{
+		return shell_exec('env 2>&1');
+	}
+
+	public static function read_system_environment_vars()
+	{
+		return shell_exec('printenv 2>&1');
+	}
+
+	public static function read_screen_resolution_dual()
+	{
+		return self::read_screen_resolution();
+	}
+
+	public static function read_opengl_renderer()
+	{
+		if(pts_client::executable_in_path('glxinfo'))
+		{
+			$out = shell_exec('glxinfo 2>&1');
+			if(preg_match('/OpenGL renderer string: (.*)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	public static function read_opengl_vendor()
+	{
+		if(pts_client::executable_in_path('glxinfo'))
+		{
+			$out = shell_exec('glxinfo 2>&1');
+			if(preg_match('/OpenGL vendor string: (.*)/', $out, $matches))
+			{
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
 	private static function byte_format($bytes)
 	{
 		if($bytes > 1073741824)
