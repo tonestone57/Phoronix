@@ -1642,11 +1642,34 @@ class phodevi_haiku_parser
 
 	public static function read_process_memory_usage($pid)
 	{
-		// top on Haiku: 32768 MB total, 25000 MB used (76%)
-		// Process list: PID USER PRI STATE CPU TIME COMMAND
-		// It doesn't show memory per process in standard 'top' output
-		// Maybe check 'ps -o' if supported? Haiku ps is basic.
-		// For now, return null as we can't easily get it.
+		if(($listarea = pts_client::executable_in_path('listarea')))
+		{
+			// Output: ID BASE SIZE LOCK PROT NAME
+			$out = shell_exec($listarea . ' ' . $pid . ' 2>&1');
+			$lines = explode("\n", $out);
+			$total_size = 0;
+			$found = false;
+
+			foreach($lines as $line)
+			{
+				$line = trim($line);
+				// Skip headers
+				if(strpos($line, 'ID') === 0 || strpos($line, 'TEAM') === 0) continue;
+
+				// 1234 0x1000 4096 0 rw ...
+				$parts = preg_split('/\s+/', $line);
+				if(count($parts) >= 3 && is_numeric($parts[2]))
+				{
+					$total_size += $parts[2];
+					$found = true;
+				}
+			}
+
+			if($found)
+			{
+				return round($total_size / 1048576, 2); // Return in MB
+			}
+		}
 		return null;
 	}
 
@@ -2298,8 +2321,22 @@ class phodevi_haiku_parser
 
 	public static function read_i2c_devices()
 	{
-		// `i2cdetect` equivalent?
-		return array();
+		$devs = array();
+		if(is_dir('/dev/bus/i2c') && ($d = scandir('/dev/bus/i2c')))
+		{
+			foreach($d as $dev)
+			{
+				if($dev != '.' && $dev != '..') $devs[] = $dev;
+			}
+		}
+		elseif(is_dir('/dev/i2c') && ($d = scandir('/dev/i2c')))
+		{
+			foreach($d as $dev)
+			{
+				if($dev != '.' && $dev != '..') $devs[] = $dev;
+			}
+		}
+		return $devs;
 	}
 
 	public static function read_input_devices()
@@ -2416,9 +2453,17 @@ class phodevi_haiku_parser
 
 	public static function read_swap_devices()
 	{
-		// Can infer from virtual memory settings or file presence, typically managed by system
-		// Not explicitly listed like /proc/swaps
-		return array();
+		$swaps = array();
+		if(is_file('/var/swap'))
+		{
+			$swaps[] = '/var/swap';
+		}
+		// Check standard location if different
+		if(is_file('/boot/common/var/swap'))
+		{
+			$swaps[] = '/boot/common/var/swap';
+		}
+		return $swaps;
 	}
 
 	public static function read_open_files_count()
@@ -2773,7 +2818,26 @@ class phodevi_haiku_parser
 
 	public static function read_process_highest_mem($top_output = null)
 	{
-		// Standard top output doesn't sort by memory or show it
+		$pids = self::read_process_id_list();
+		$highest_mem = 0;
+		$highest_pid = 0;
+
+		foreach($pids as $pid)
+		{
+			$mem = self::read_process_memory_usage($pid);
+			if($mem > $highest_mem)
+			{
+				$highest_mem = $mem;
+				$highest_pid = $pid;
+			}
+		}
+
+		if($highest_pid > 0)
+		{
+			$name = self::read_process_command($highest_pid);
+			return $name . ' (' . $highest_mem . ' MB)';
+		}
+
 		return null;
 	}
 
