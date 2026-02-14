@@ -1578,8 +1578,8 @@ class phodevi_haiku_parser
 
 		// Fallback to parsing ps
 		$ps = shell_exec('ps 2>&1');
-		// Match name at end of line (Haiku ps output: team thread name)
-		if(preg_match_all('/^\s*([0-9]+)\s+[0-9]+\s+(?:.*\/)?' . preg_quote($name, '/') . '$/m', $ps, $matches))
+		// Match name (allow arguments after space) in Haiku ps output: team thread name
+		if(preg_match_all('/^\s*([0-9]+)\s+[0-9]+\s+(?:.*\/)?' . preg_quote($name, '/') . '(?:\s|$)/m', $ps, $matches))
 		{
 			return $matches[1][0];
 		}
