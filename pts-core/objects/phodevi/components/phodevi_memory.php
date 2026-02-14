@@ -77,11 +77,15 @@ class phodevi_memory extends phodevi_device_interface
 		{
 			if(pts_client::executable_in_path('dmidecode'))
 			{
-				$mem_size = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Size', false, array('Not Installed', 'No Module Installed', 'Undefined', 'Not Specified'));
-				$mem_speed = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Configured Clock Speed', true, array('Unknown', 'Undefined', 'Not Specified'));
-				$mem_type = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Type', true, array('Unknown', 'Other', 'Flash', 'Undefined', 'Not Specified'));
-				$mem_manufacturer = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Manufacturer', true, array('Unknown', 'Undefined', 'Not Specified'));
-				$mem_part = phodevi_linux_parser::read_dmidecode('memory', 'Memory Device', 'Part Number', true, array('Unknown', 'Undefined', 'Not Specified'));
+				$modules = phodevi_haiku_parser::read_memory_modules();
+				foreach($modules as $module)
+				{
+					if(isset($module['Size'])) $mem_size[] = $module['Size'];
+					if(isset($module['Speed'])) $mem_speed[] = $module['Speed'];
+					if(isset($module['Type'])) $mem_type[] = $module['Type'];
+					if(isset($module['Manufacturer'])) $mem_manufacturer[] = $module['Manufacturer'];
+					if(isset($module['Part Number'])) $mem_part[] = $module['Part Number'];
+				}
 			}
 
 			if(empty($mem_size) || $mem_size === false)

@@ -738,6 +738,33 @@ class phodevi_haiku_parser
 		return $info;
 	}
 
+	public static function read_cpu_cache_size($dmidecode_output = null)
+	{
+		$cache = self::read_cache_info($dmidecode_output);
+		$size = 0;
+		if(isset($cache['L3']) && !empty($cache['L3']))
+		{
+			$size = $cache['L3'];
+		}
+		elseif(isset($cache['L2']) && !empty($cache['L2']))
+		{
+			$size = $cache['L2'];
+		}
+
+		if(!empty($size))
+		{
+			// Convert to MB
+			$is_kb = stripos($size, 'KB') !== false;
+			$size_num = floatval(str_ireplace(array('KB', ' MB', ','), array('', '', ''), $size));
+			if($is_kb)
+			{
+				$size_num = $size_num / 1024;
+			}
+			return $size_num;
+		}
+		return 0;
+	}
+
 	public static function read_battery_details()
 	{
 		$info = array();
@@ -833,6 +860,13 @@ class phodevi_haiku_parser
 
 	public static function read_timezone()
 	{
+		// Try system timezone setting first
+		if(is_readable('/boot/system/settings/Time/timezone'))
+		{
+			$tz = trim(file_get_contents('/boot/system/settings/Time/timezone'));
+			if(!empty($tz)) return $tz;
+		}
+		// Fallback to date command
 		return trim(shell_exec('date +%Z 2>&1'));
 	}
 
@@ -1203,8 +1237,11 @@ class phodevi_haiku_parser
 
 	public static function read_kernel_cmdline()
 	{
-		// /bin/kernel_args is not standardly dumped to text file
-		// sysinfo might have it?
+		if(pts_client::executable_in_path('kernel_args'))
+		{
+			return trim(shell_exec('kernel_args 2>&1'));
+		}
+		// Fallback to checking syslog or other locations if needed
 		return null;
 	}
 
@@ -1289,14 +1326,21 @@ class phodevi_haiku_parser
 
 	public static function read_running_services()
 	{
-		// querying launch_daemon?
-		// launch_roster list
 		if(pts_client::executable_in_path('launch_roster'))
 		{
 			$out = shell_exec('launch_roster list 2>&1');
-			// Parse logic here
-			// Returns raw string for now
-			return $out;
+			$services = array();
+			$lines = explode("\n", $out);
+			foreach($lines as $line)
+			{
+				$line = trim($line);
+				if(!empty($line) && strpos($line, 'TARGET') === false)
+				{
+					// Extract service name
+					$services[] = $line;
+				}
+			}
+			return implode(', ', $services);
 		}
 		return null;
 	}
@@ -1406,7 +1450,12 @@ class phodevi_haiku_parser
 
 	public static function read_wifi_ssid($ifconfig_output = null)
 	{
-		// scan media for ssid if available
+		$out = $ifconfig_output == null ? shell_exec('ifconfig -a 2>&1') : $ifconfig_output;
+		// media: WiFi ... (SSID: mynetwork)
+		if(preg_match('/SSID:\s+([^\)]+)/', $out, $matches))
+		{
+			return trim($matches[1]);
+		}
 		return null;
 	}
 
@@ -1534,18 +1583,39 @@ class phodevi_haiku_parser
 
 	public static function read_cpu_stepping($sysinfo_output = null)
 	{
-		// sysinfo: CPU #0: ...
-		// Stepping not explicitly in standard sysinfo string usually
+		$out = self::read_dmidecode('processor');
+		if(preg_match('/ID: (.*)/', $out, $matches))
+		{
+			// Extract stepping from ID? E.g. "BFEBFBFF000306C3"
+			// Usually last digit?
+			$id = trim($matches[1]);
+			if(strlen($id) > 0)
+			{
+				return substr($id, -1);
+			}
+		}
 		return null;
 	}
 
 	public static function read_cpu_microcode($sysinfo_output = null)
 	{
+		$out = self::read_dmidecode('processor');
+		if(preg_match('/ID: (.*)/', $out, $matches))
+		{
+			return trim($matches[1]);
+		}
 		return null;
 	}
 
 	public static function read_kernel_tainted()
 	{
+		// Haiku kernel doesn't have a direct "tainted" flag like Linux
+		// but checking for debug mode or safe mode might be relevant
+		if(file_exists('/boot/home/config/settings/kernel/drivers/kernel') &&
+		   strpos(file_get_contents('/boot/home/config/settings/kernel/drivers/kernel'), 'safe_mode true') !== false)
+		{
+			return '1'; // Safe Mode
+		}
 		return '0';
 	}
 
@@ -1555,39 +1625,123 @@ class phodevi_haiku_parser
 		{
 			return trim(shell_exec($pidof . ' ' . escapeshellarg($name) . ' 2>&1'));
 		}
+
+		// Fallback to parsing ps
+		$ps = shell_exec('ps 2>&1');
+		// Match name (allow arguments after space) in Haiku ps output: team thread name
+		if(preg_match_all('/^\s*([0-9]+)\s+[0-9]+\s+(?:.*\/)?' . preg_quote($name, '/') . '(?:\s|$)/m', $ps, $matches))
+		{
+			return $matches[1][0];
+		}
+
 		return null;
 	}
 
 	public static function read_process_parent_pid($pid)
 	{
-		// ps on Haiku...
+		// Not easily exposed in standard CLI tools
 		return null;
 	}
 
 	public static function read_process_state($pid)
 	{
+		if(($info = self::read_top_process_info($pid)))
+		{
+			// PID USER PRI STATE CPU TIME COMMAND
+			// Index 3 is STATE
+			if(isset($info[3])) return $info[3];
+		}
 		return null;
 	}
 
 	public static function read_process_memory_usage($pid)
 	{
+		if(($listarea = pts_client::executable_in_path('listarea')))
+		{
+			// Output: ID BASE SIZE LOCK PROT NAME
+			$out = shell_exec($listarea . ' ' . $pid . ' 2>&1');
+			$lines = explode("\n", $out);
+			$total_size = 0;
+			$found = false;
+
+			foreach($lines as $line)
+			{
+				$line = trim($line);
+				// Skip headers
+				if(strpos($line, 'ID') === 0 || strpos($line, 'TEAM') === 0) continue;
+
+				// 1234 0x1000 4096 0 rw ...
+				$parts = preg_split('/\s+/', $line);
+				if(count($parts) >= 3 && is_numeric($parts[2]))
+				{
+					$total_size += $parts[2];
+					$found = true;
+				}
+			}
+
+			if($found)
+			{
+				return round($total_size / 1048576, 2); // Return in MB
+			}
+		}
 		return null;
 	}
 
 	public static function read_process_cpu_usage($pid)
 	{
+		if(($info = self::read_top_process_info($pid)))
+		{
+			// PID USER PRI STATE CPU TIME COMMAND
+			// Index 4 is CPU
+			if(isset($info[4])) return $info[4];
+		}
 		return null;
 	}
 
 	public static function read_battery_time_remaining()
 	{
-		// /dev/power/acpi_battery/0/battery_status or similar?
-		// No standard file for time remaining
+		// Calculate from capacity and rate if available
+		if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
+		{
+			foreach($b as $battery)
+			{
+				if($battery != '.' && $battery != '..')
+				{
+					$path = '/dev/power/acpi_battery/' . $battery;
+					if(is_file($path . '/state') && is_file($path . '/capacity') && is_file($path . '/current_rate'))
+					{
+						$state = trim(file_get_contents($path . '/state')); // 1=discharging?
+						$capacity = trim(file_get_contents($path . '/capacity'));
+						$rate = trim(file_get_contents($path . '/current_rate'));
+
+						// Basic check if discharging and rate > 0
+						if($rate > 0 && stripos($state, 'discharging') !== false)
+						{
+							return round(($capacity / $rate) * 3600); // Seconds
+						}
+					}
+				}
+			}
+		}
 		return null;
 	}
 
 	public static function read_battery_charge_rate()
 	{
+		if(is_dir('/dev/power/acpi_battery') && ($b = scandir('/dev/power/acpi_battery')))
+		{
+			foreach($b as $battery)
+			{
+				if($battery != '.' && $battery != '..')
+				{
+					$path = '/dev/power/acpi_battery/' . $battery;
+					if(is_file($path . '/current_rate'))
+					{
+						return trim(file_get_contents($path . '/current_rate')) . ' mA'; // Assuming mA
+					}
+				}
+			}
+		}
 		return null;
 	}
 
@@ -1779,18 +1933,34 @@ class phodevi_haiku_parser
 	public static function read_process_command($pid)
 	{
 		// In Haiku ps output: team thread name. Name is command.
-		// Need filtering by PID (team).
-		// shell_exec('ps | grep ' . $pid)
-		return null; // Implementation complex without ps flags
+		$ps = shell_exec('ps 2>&1');
+		// match line starting with pid (team)
+		if(preg_match('/^' . $pid . '\s+[0-9]+\s+(.*)$/m', $ps, $matches))
+		{
+			return trim($matches[1]);
+		}
+		return null;
 	}
 
 	public static function read_process_user($pid)
 	{
-		return 'user'; // Haiku is single user effectively for GUI apps usually
+		if(($info = self::read_top_process_info($pid)))
+		{
+			// PID USER PRI STATE CPU TIME COMMAND
+			// Index 1 is USER
+			if(isset($info[1])) return $info[1];
+		}
+		return 'user';
 	}
 
 	public static function read_process_priority($pid)
 	{
+		if(($info = self::read_top_process_info($pid)))
+		{
+			// PID USER PRI STATE CPU TIME COMMAND
+			// Index 2 is PRI
+			if(isset($info[2])) return $info[2];
+		}
 		return null;
 	}
 
@@ -1915,7 +2085,7 @@ class phodevi_haiku_parser
 	public static function read_idle_time()
 	{
 		$uptime = self::read_uptime();
-		// Haiku doesn't report idle time easily like /proc/uptime
+		// Haiku doesn't expose total idle time easily via uptime or standard tools
 		return null;
 	}
 
@@ -2074,10 +2244,11 @@ class phodevi_haiku_parser
 
 	public static function read_kernel_compiler()
 	{
-		// e.g. GCC 11.2.0
-		$sysinfo = self::read_sysinfo('kernel_release');
-		// Not typically in release string, check sysinfo output generally?
-		// For now return null or try to guess from gcc -v
+		// Fallback to system GCC version as Haiku is self-hosting
+		if(($gcc = self::read_gcc_version()))
+		{
+			return 'GCC ' . $gcc;
+		}
 		return null;
 	}
 
@@ -2164,8 +2335,22 @@ class phodevi_haiku_parser
 
 	public static function read_i2c_devices()
 	{
-		// `i2cdetect` equivalent?
-		return array();
+		$devs = array();
+		if(is_dir('/dev/bus/i2c') && ($d = scandir('/dev/bus/i2c')))
+		{
+			foreach($d as $dev)
+			{
+				if($dev != '.' && $dev != '..') $devs[] = $dev;
+			}
+		}
+		elseif(is_dir('/dev/i2c') && ($d = scandir('/dev/i2c')))
+		{
+			foreach($d as $dev)
+			{
+				if($dev != '.' && $dev != '..') $devs[] = $dev;
+			}
+		}
+		return $devs;
 	}
 
 	public static function read_input_devices()
@@ -2204,6 +2389,15 @@ class phodevi_haiku_parser
 	public static function read_gpu_memory()
 	{
 		// Difficult to get standardly on Haiku without specific driver info
+		// Try parsing syslog for VRAM
+		if(is_readable('/var/log/syslog'))
+		{
+			$syslog = shell_exec('grep "VRAM" /var/log/syslog | tail -n 1');
+			if(preg_match('/([0-9]+)\s*MB/', $syslog, $matches))
+			{
+				return $matches[1];
+			}
+		}
 		return null;
 	}
 
@@ -2276,9 +2470,17 @@ class phodevi_haiku_parser
 
 	public static function read_swap_devices()
 	{
-		// Can infer from virtual memory settings or file presence, typically managed by system
-		// Not explicitly listed like /proc/swaps
-		return array();
+		$swaps = array();
+		if(is_file('/var/swap'))
+		{
+			$swaps[] = '/var/swap';
+		}
+		// Check standard location if different
+		if(is_file('/boot/common/var/swap'))
+		{
+			$swaps[] = '/boot/common/var/swap';
+		}
+		return $swaps;
 	}
 
 	public static function read_open_files_count()
@@ -2315,6 +2517,12 @@ class phodevi_haiku_parser
 
 	public static function read_process_cpu($process_name)
 	{
+		$pid = self::read_process_pid($process_name);
+		if($pid)
+		{
+			$usage = self::read_process_cpu_usage($pid);
+			if($usage !== null) return $usage;
+		}
 		return -1;
 	}
 
@@ -2325,7 +2533,11 @@ class phodevi_haiku_parser
 
 	public static function read_users_logged_in()
 	{
-		return trim(shell_exec('who | wc -l 2>&1'));
+		if(pts_client::executable_in_path('who'))
+		{
+			return trim(shell_exec('who | wc -l 2>&1'));
+		}
+		return 1; // Assume at least 1 user (single user usually)
 	}
 
 	public static function read_gcc_version()
@@ -2584,41 +2796,157 @@ class phodevi_haiku_parser
 
 	public static function read_process_highest_cpu($top_output = null)
 	{
-		// Haiku top format is unique, simple parse highest based on sort if possible
-		// Or stub for now as top parsing needs detailed state tracking
+		$top = $top_output == null ? shell_exec('top -n 1 2>&1') : $top_output;
+		$lines = explode("\n", $top);
+		$highest_cpu = 0;
+		$highest_proc = '';
+		$headers_found = false;
+
+		foreach($lines as $line)
+		{
+			if(strpos($line, 'PID') !== false && strpos($line, 'CPU') !== false)
+			{
+				$headers_found = true;
+				continue;
+			}
+
+			if($headers_found)
+			{
+				$parts = preg_split('/\s+/', trim($line));
+				if(count($parts) >= 7)
+				{
+					// PID USER PRI STATE CPU TIME COMMAND
+					$cpu = floatval($parts[4]);
+					if($cpu > $highest_cpu)
+					{
+						$highest_cpu = $cpu;
+						$highest_proc = $parts[6];
+					}
+				}
+			}
+		}
+
+		if(!empty($highest_proc))
+		{
+			return $highest_proc . ' (' . $highest_cpu . '%)';
+		}
 		return null;
 	}
 
 	public static function read_process_highest_mem($top_output = null)
 	{
+		$pids = self::read_process_id_list();
+		$highest_mem = 0;
+		$highest_pid = 0;
+
+		foreach($pids as $pid)
+		{
+			$mem = self::read_process_memory_usage($pid);
+			if($mem > $highest_mem)
+			{
+				$highest_mem = $mem;
+				$highest_pid = $pid;
+			}
+		}
+
+		if($highest_pid > 0)
+		{
+			$name = self::read_process_command($highest_pid);
+			return $name . ' (' . $highest_mem . ' MB)';
+		}
+
+		return null;
+	}
+
+	private static function read_top_process_info($pid)
+	{
+		$top = shell_exec('top -n 1 2>&1');
+		$lines = explode("\n", $top);
+		foreach($lines as $line)
+		{
+			$line = trim($line);
+			if(preg_match('/^' . $pid . '\s+/', $line))
+			{
+				return preg_split('/\s+/', $line);
+			}
+		}
 		return null;
 	}
 
 	public static function read_filesystem_total_size()
 	{
-		$total = 0;
-		$df = self::read_disk_info();
-		foreach($df as $d)
+		// Parse df -k / for the root filesystem size
+		if(($df = pts_client::executable_in_path('df')))
 		{
-			if(isset($d['size']))
+			$out = shell_exec($df . ' -k / 2>&1');
+			// Haiku: Mount Type Total Used Free
+			$lines = explode("\n", $out);
+			foreach($lines as $line)
 			{
-				$size = $d['size'];
-				// Convert back to bytes for summing? Or just return primary disk size?
-				// This is tricky without a converter.
-				// Actually read_disk_info returns formatted strings.
-				// We need raw data.
+				if(strpos($line, '/boot') !== false || (strpos($line, '/') !== false && strpos($line, 'Mount') === false))
+				{
+					$parts = preg_split('/\s+/', trim($line));
+					if(strpos($out, 'Mount') !== false && count($parts) >= 3 && is_numeric($parts[2]))
+					{
+						return $parts[2] * 1024;
+					}
+					else if(count($parts) >= 2 && is_numeric($parts[1]))
+					{
+						return $parts[1] * 1024;
+					}
+				}
 			}
 		}
-		return null; // Requires raw data refactor
+		return null;
 	}
 
 	public static function read_filesystem_used_size()
 	{
+		if(($df = pts_client::executable_in_path('df')))
+		{
+			$out = shell_exec($df . ' -k / 2>&1');
+			$lines = explode("\n", $out);
+			foreach($lines as $line)
+			{
+				if(strpos($line, '/boot') !== false || (strpos($line, '/') !== false && strpos($line, 'Mount') === false))
+				{
+					$parts = preg_split('/\s+/', trim($line));
+					if(strpos($out, 'Mount') !== false && count($parts) >= 4 && is_numeric($parts[3]))
+					{
+						return $parts[3] * 1024;
+					}
+					else if(count($parts) >= 3 && is_numeric($parts[2]))
+					{
+						return $parts[2] * 1024;
+					}
+				}
+			}
+		}
 		return null;
 	}
 
 	public static function read_filesystem_free_size()
 	{
+		if(($df = pts_client::executable_in_path('df')))
+		{
+			$out = shell_exec($df . ' -k / 2>&1');
+			$lines = explode("\n", $out);
+			foreach($lines as $line)
+			{
+				if(strpos($line, '/boot') !== false || (strpos($line, '/') !== false && strpos($line, 'Mount') === false))
+				{
+					$parts = preg_split('/\s+/', trim($line));
+					if(strpos($out, 'Mount') !== false && count($parts) >= 5 && is_numeric($parts[4]))
+					{
+						return $parts[4] * 1024;
+					}
+					else if(count($parts) >= 4 && is_numeric($parts[3]))
+					{
+						return $parts[3] * 1024;
+					}
+				}
+			}
+		}
 		return null;
 	}
 
