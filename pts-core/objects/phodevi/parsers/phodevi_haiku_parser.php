@@ -860,6 +860,13 @@ class phodevi_haiku_parser
 
 	public static function read_timezone()
 	{
+		// Try system timezone setting first
+		if(is_readable('/boot/system/settings/Time/timezone'))
+		{
+			$tz = trim(file_get_contents('/boot/system/settings/Time/timezone'));
+			if(!empty($tz)) return $tz;
+		}
+		// Fallback to date command
 		return trim(shell_exec('date +%Z 2>&1'));
 	}
 
@@ -1602,6 +1609,13 @@ class phodevi_haiku_parser
 
 	public static function read_kernel_tainted()
 	{
+		// Haiku kernel doesn't have a direct "tainted" flag like Linux
+		// but checking for debug mode or safe mode might be relevant
+		if(file_exists('/boot/home/config/settings/kernel/drivers/kernel') &&
+		   strpos(file_get_contents('/boot/home/config/settings/kernel/drivers/kernel'), 'safe_mode true') !== false)
+		{
+			return '1'; // Safe Mode
+		}
 		return '0';
 	}
 
