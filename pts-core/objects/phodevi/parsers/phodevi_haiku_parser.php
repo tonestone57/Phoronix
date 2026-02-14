@@ -755,12 +755,12 @@ class phodevi_haiku_parser
 		{
 			// Convert to MB
 			$is_kb = stripos($size, 'KB') !== false;
-			$size = str_ireplace(array('KB', ' MB'), array('', ''), $size);
+			$size_num = floatval(str_ireplace(array('KB', ' MB', ','), array('', '', ''), $size));
 			if($is_kb)
 			{
-				$size = $size / 1024;
+				$size_num = $size_num / 1024;
 			}
-			return $size;
+			return $size_num;
 		}
 		return 0;
 	}
@@ -2390,10 +2390,13 @@ class phodevi_haiku_parser
 	{
 		// Difficult to get standardly on Haiku without specific driver info
 		// Try parsing syslog for VRAM
-		$syslog = shell_exec('grep "VRAM" /var/log/syslog | tail -n 1');
-		if(preg_match('/([0-9]+)\s*MB/', $syslog, $matches))
+		if(is_readable('/var/log/syslog'))
 		{
-			return $matches[1];
+			$syslog = shell_exec('grep "VRAM" /var/log/syslog | tail -n 1');
+			if(preg_match('/([0-9]+)\s*MB/', $syslog, $matches))
+			{
+				return $matches[1];
+			}
 		}
 		return null;
 	}
@@ -2883,11 +2886,11 @@ class phodevi_haiku_parser
 				if(strpos($line, '/boot') !== false || (strpos($line, '/') !== false && strpos($line, 'Mount') === false))
 				{
 					$parts = preg_split('/\s+/', trim($line));
-					if(strpos($out, 'Mount') !== false && count($parts) >= 3)
+					if(strpos($out, 'Mount') !== false && count($parts) >= 3 && is_numeric($parts[2]))
 					{
 						return $parts[2] * 1024;
 					}
-					else if(count($parts) >= 2)
+					else if(count($parts) >= 2 && is_numeric($parts[1]))
 					{
 						return $parts[1] * 1024;
 					}
@@ -2908,11 +2911,11 @@ class phodevi_haiku_parser
 				if(strpos($line, '/boot') !== false || (strpos($line, '/') !== false && strpos($line, 'Mount') === false))
 				{
 					$parts = preg_split('/\s+/', trim($line));
-					if(strpos($out, 'Mount') !== false && count($parts) >= 4)
+					if(strpos($out, 'Mount') !== false && count($parts) >= 4 && is_numeric($parts[3]))
 					{
 						return $parts[3] * 1024;
 					}
-					else if(count($parts) >= 3)
+					else if(count($parts) >= 3 && is_numeric($parts[2]))
 					{
 						return $parts[2] * 1024;
 					}
@@ -2933,11 +2936,11 @@ class phodevi_haiku_parser
 				if(strpos($line, '/boot') !== false || (strpos($line, '/') !== false && strpos($line, 'Mount') === false))
 				{
 					$parts = preg_split('/\s+/', trim($line));
-					if(strpos($out, 'Mount') !== false && count($parts) >= 5)
+					if(strpos($out, 'Mount') !== false && count($parts) >= 5 && is_numeric($parts[4]))
 					{
 						return $parts[4] * 1024;
 					}
-					else if(count($parts) >= 4)
+					else if(count($parts) >= 4 && is_numeric($parts[3]))
 					{
 						return $parts[3] * 1024;
 					}
