@@ -292,9 +292,7 @@ class phodevi_cpu extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// Try parsing sysinfo for cache size if possible, or stub to 0
-			// Haiku sysinfo doesn't easily expose cache size in a standard parsed field yet
-			$cache_size = 0;
+			$cache_size = phodevi_haiku_parser::read_cpu_cache_size();
 		}
 
 		return $cache_size;

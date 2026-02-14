@@ -114,7 +114,11 @@ class phodevi_disk extends phodevi_device_interface
 	{
 		$path = PTS_IS_CLIENT ? pts_client::test_install_root_path() : '.';
 		$block_size = -1;
-		if(PTS_IS_CLIENT && pts_client::executable_in_path('stat') && !phodevi::is_windows())
+		if(phodevi::is_haiku())
+		{
+			$block_size = phodevi_haiku_parser::read_filesystem_block_size($path);
+		}
+		else if(PTS_IS_CLIENT && pts_client::executable_in_path('stat') && !phodevi::is_windows())
 		{
 			$stat = trim(shell_exec('stat -f -c %S ' . $path . ' 2>/dev/null'));
 

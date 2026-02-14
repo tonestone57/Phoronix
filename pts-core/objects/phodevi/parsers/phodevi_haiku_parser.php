@@ -738,6 +738,33 @@ class phodevi_haiku_parser
 		return $info;
 	}
 
+	public static function read_cpu_cache_size($dmidecode_output = null)
+	{
+		$cache = self::read_cache_info($dmidecode_output);
+		$size = 0;
+		if(isset($cache['L3']) && !empty($cache['L3']))
+		{
+			$size = $cache['L3'];
+		}
+		elseif(isset($cache['L2']) && !empty($cache['L2']))
+		{
+			$size = $cache['L2'];
+		}
+
+		if(!empty($size))
+		{
+			// Convert to MB
+			$is_kb = stripos($size, 'KB') !== false;
+			$size = str_ireplace(array('KB', ' MB'), array('', ''), $size);
+			if($is_kb)
+			{
+				$size = $size / 1024;
+			}
+			return $size;
+		}
+		return 0;
+	}
+
 	public static function read_battery_details()
 	{
 		$info = array();
@@ -1549,8 +1576,17 @@ class phodevi_haiku_parser
 
 	public static function read_cpu_stepping($sysinfo_output = null)
 	{
-		// Try to extract from dmidecode ID if possible, or sysinfo
-		// CPU #0: ...
+		$out = self::read_dmidecode('processor');
+		if(preg_match('/ID: (.*)/', $out, $matches))
+		{
+			// Extract stepping from ID? E.g. "BFEBFBFF000306C3"
+			// Usually last digit?
+			$id = trim($matches[1]);
+			if(strlen($id) > 0)
+			{
+				return substr($id, -1);
+			}
+		}
 		return null;
 	}
 
@@ -1606,7 +1642,11 @@ class phodevi_haiku_parser
 
 	public static function read_process_memory_usage($pid)
 	{
-		// top on Haiku doesn't show per-process memory in standard output usually
+		// top on Haiku: 32768 MB total, 25000 MB used (76%)
+		// Process list: PID USER PRI STATE CPU TIME COMMAND
+		// It doesn't show memory per process in standard 'top' output
+		// Maybe check 'ps -o' if supported? Haiku ps is basic.
+		// For now, return null as we can't easily get it.
 		return null;
 	}
 
@@ -2298,6 +2338,12 @@ class phodevi_haiku_parser
 	public static function read_gpu_memory()
 	{
 		// Difficult to get standardly on Haiku without specific driver info
+		// Try parsing syslog for VRAM
+		$syslog = shell_exec('grep "VRAM" /var/log/syslog | tail -n 1');
+		if(preg_match('/([0-9]+)\s*MB/', $syslog, $matches))
+		{
+			return $matches[1];
+		}
 		return null;
 	}
 
@@ -2409,6 +2455,12 @@ class phodevi_haiku_parser
 
 	public static function read_process_cpu($process_name)
 	{
+		$pid = self::read_process_pid($process_name);
+		if($pid)
+		{
+			$usage = self::read_process_cpu_usage($pid);
+			if($usage !== null) return $usage;
+		}
 		return -1;
 	}
 
@@ -2721,6 +2773,7 @@ class phodevi_haiku_parser
 
 	public static function read_process_highest_mem($top_output = null)
 	{
+		// Standard top output doesn't sort by memory or show it
 		return null;
 	}
 
