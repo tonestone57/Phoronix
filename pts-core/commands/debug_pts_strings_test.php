@@ -68,6 +68,18 @@ class debug_pts_strings_test implements pts_option_interface
 				array('input' => 'Abc', 'expected' => false),
 				array('input' => 'abc', 'expected' => false),
 			),
+			'trim_spaces' => array(
+				array('input' => 'Hello World', 'expected' => 'Hello World'),
+				array('input' => 'Hello  World', 'expected' => 'Hello World'),
+				array('input' => '  Hello World', 'expected' => 'Hello World'),
+				array('input' => 'Hello World  ', 'expected' => 'Hello World'),
+				array('input' => '  Hello   World  ', 'expected' => 'Hello World'),
+				array('input' => '', 'expected' => ''),
+				array('input' => '   ', 'expected' => ''),
+				array('input' => 'A B C', 'expected' => 'A B C'),
+				array('input' => 'A  B   C', 'expected' => 'A B C'),
+				array('input' => '   a   b   c   ', 'expected' => 'a b c'),
+			),
 		);
 
 		foreach ($test_suites as $method => $test_cases)
