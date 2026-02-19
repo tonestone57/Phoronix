@@ -585,7 +585,6 @@ class pts_result_file
 		}
 		else
 		{
-			$hw = null; // XXX: this isn't used anymore at least for now on system hardware
 			if($identifiers == false)
 			{
 				$identifiers = $this->get_system_identifiers();
