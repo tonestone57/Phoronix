@@ -44,6 +44,8 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(), 'expected' => 0),
 				array('values' => array(1.1, 2.2, 3.3), 'expected' => 1.9988326521154),
 				array('values' => array(0, 10, 100), 'expected' => 0),
+				array('values' => array_fill(0, 2000, 2), 'expected' => 2),
+				array('values' => array_fill(0, 2000, 0.5), 'expected' => 0.5),
 			),
 		);
 
@@ -57,7 +59,12 @@ class debug_pts_math_test implements pts_option_interface
 				$values = $case['values'];
 				$expected = $case['expected'];
 
-				echo "Testing $func([" . implode(', ', $values) . "]) ... ";
+				$values_str = implode(', ', array_slice($values, 0, 10));
+				if(count($values) > 10)
+				{
+					$values_str .= ', ... (' . count($values) . ' items)';
+				}
+				echo "Testing $func([" . $values_str . "]) ... ";
 
 				$result = pts_math::$func($values);
 
