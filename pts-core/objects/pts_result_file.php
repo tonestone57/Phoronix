@@ -40,6 +40,7 @@ class pts_result_file
 
 	public function __construct($result_file = null, $read_only_result_objects = false, $parse_only_qualified_result_objects = false)
 	{
+		$this->file_location = false;
 		$this->save_identifier = $result_file;
 		$this->systems = array();
 		$this->result_objects = array();
@@ -52,15 +53,20 @@ class pts_result_file
 		else if(is_file($result_file))
 		{
 			$this->file_location = $result_file;
-			$result_file = file_get_contents($result_file);
 		}
 		else if(!isset($result_file[1024]) && defined('PTS_SAVE_RESULTS_PATH') && is_file(PTS_SAVE_RESULTS_PATH . $result_file . '/composite.xml'))
 		{
 			$this->file_location = PTS_SAVE_RESULTS_PATH . $result_file . '/composite.xml';
-			$result_file = file_get_contents($this->file_location);
 		}
 
-		$xml = simplexml_load_string($result_file, 'SimpleXMLElement', LIBXML_COMPACT | LIBXML_PARSEHUGE);
+		if($this->file_location)
+		{
+			$xml = simplexml_load_file($this->file_location, 'SimpleXMLElement', LIBXML_COMPACT | LIBXML_PARSEHUGE);
+		}
+		else
+		{
+			$xml = simplexml_load_string($result_file, 'SimpleXMLElement', LIBXML_COMPACT | LIBXML_PARSEHUGE);
+		}
 		if(isset($xml->Generated))
 		{
 			$this->title = self::clean_input($xml->Generated->Title);
