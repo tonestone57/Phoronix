@@ -182,28 +182,41 @@ class phodevi_disk extends phodevi_device_interface
 
 		if(phodevi::is_macos())
 		{
-			// TODO: Support reading non-SATA drives and more than one drive
-			$capacity = phodevi_osx_parser::read_osx_system_profiler('SPSerialATADataType', 'Capacity');
-			$model = phodevi_osx_parser::read_osx_system_profiler('SPSerialATADataType', 'Model');
-
-			if(($cut = strpos($capacity, ' (')) !== false)
+			foreach(array('SPSerialATADataType', 'SPNVMeDataType') as $type)
 			{
-				$capacity = substr($capacity, 0, $cut);
-			}
+				$capacities = phodevi_osx_parser::read_osx_system_profiler($type, 'Capacity', true);
+				$models = phodevi_osx_parser::read_osx_system_profiler($type, 'Model', true);
 
-			if(($cut = strpos($capacity, ' ')) !== false)
-			{
-				if(is_numeric(substr($capacity, 0, $cut)))
+				if(is_array($capacities) && is_array($models))
 				{
-					$capacity = floor(substr($capacity, 0, $cut)) . substr($capacity, $cut);
+					$count = min(count($capacities), count($models));
+
+					for($i = 0; $i < $count; $i++)
+					{
+						$capacity = $capacities[$i];
+						$model = $models[$i];
+
+						if(($cut = strpos($capacity, ' (')) !== false)
+						{
+							$capacity = substr($capacity, 0, $cut);
+						}
+
+						if(($cut = strpos($capacity, ' ')) !== false)
+						{
+							if(is_numeric(substr($capacity, 0, $cut)))
+							{
+								$capacity = floor(substr($capacity, 0, $cut)) . substr($capacity, $cut);
+							}
+						}
+
+						$capacity = str_replace(' GB', 'GB', $capacity);
+
+						if(!empty($capacity) && !empty($model))
+						{
+							$disks[] = $capacity . ' ' . $model;
+						}
+					}
 				}
-			}
-
-			$capacity = str_replace(' GB', 'GB', $capacity);
-
-			if(!empty($capacity) && !empty($model))
-			{
-				$disks = array($capacity . ' ' . $model);
 			}
 		}
 		else if(phodevi::is_bsd())
