@@ -41,7 +41,7 @@ class pts_client
 	private static $forked_pids = array();
 	private static $download_speed_average_count = -1;
 	private static $download_speed_average_speed = -1;
-	protected static $startup_pid = null;
+	private static $startup_pid = null;
 
 	public static function create_lock($lock_file)
 	{
