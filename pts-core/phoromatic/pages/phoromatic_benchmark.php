@@ -137,7 +137,7 @@ class phoromatic_benchmark implements pts_webui_interface
 
 						foreach($all_systems as $sys_row)
 						{
-							if(strpos($sys_row['Groups'], '#' . $group . '#') !== false)
+							if(stripos($sys_row['Groups'], '#' . $group . '#') !== false)
 							{
 								$main .= '<li><a href="?systems/' . $sys_row['SystemID'] . '">' . phoromatic_server::system_id_to_name($sys_row['SystemID']) . '</a></li>';
 							}
