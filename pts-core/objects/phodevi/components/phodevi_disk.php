@@ -184,37 +184,126 @@ class phodevi_disk extends phodevi_device_interface
 		{
 			foreach(array('SPSerialATADataType', 'SPNVMeDataType') as $type)
 			{
-				$capacities = phodevi_osx_parser::read_osx_system_profiler($type, 'Capacity', true);
-				$models = phodevi_osx_parser::read_osx_system_profiler($type, 'Model', true);
-
-				if(is_array($capacities) && is_array($models))
+				$lines = phodevi_osx_parser::get_system_profiler_lines($type);
+				if(empty($lines))
 				{
-					$count = min(count($capacities), count($models));
+					continue;
+				}
 
-					for($i = 0; $i < $count; $i++)
+				$stack = array();
+				$found_items = array();
+
+				foreach($lines as $line)
+				{
+					if(empty(trim($line)))
 					{
-						$capacity = $capacities[$i];
-						$model = $models[$i];
+						continue;
+					}
 
-						if(($cut = strpos($capacity, ' (')) !== false)
-						{
-							$capacity = substr($capacity, 0, $cut);
-						}
+					// Calculate indent
+					$trimmed_line = ltrim($line);
+					$indent = strlen($line) - strlen($trimmed_line);
 
-						if(($cut = strpos($capacity, ' ')) !== false)
+					// Pop from stack if indent decreased or stayed same
+					while(!empty($stack) && end($stack)['indent'] >= $indent)
+					{
+						$item = array_pop($stack);
+
+						// Check if item is a drive candidate
+						if(isset($item['props']['model']) && isset($item['props']['capacity']))
 						{
-							if(is_numeric(substr($capacity, 0, $cut)))
+							// Ensure we are not inside a "Volumes" block
+							$is_volume = false;
+							foreach($stack as $parent)
 							{
-								$capacity = floor(substr($capacity, 0, $cut)) . substr($capacity, $cut);
+								if(isset($parent['key']) && $parent['key'] == 'volumes')
+								{
+									$is_volume = true;
+									break;
+								}
+							}
+
+							if(!$is_volume)
+							{
+								$found_items[] = $item['props'];
 							}
 						}
+					}
 
-						$capacity = str_replace(' GB', 'GB', $capacity);
+					// Parse key/value
+					$parts = explode(':', $trimmed_line, 2);
+					$key_raw = $parts[0];
+					// Normalize key
+					$key = strtolower(str_replace(' ', '', $key_raw));
+					// Remove parens from key like "Capacity (KB)"
+					if(($cut = strpos($key, '(')) !== false)
+					{
+						$key = substr($key, 0, $cut);
+					}
 
-						if(!empty($capacity) && !empty($model))
+					$value = isset($parts[1]) ? trim($parts[1]) : null;
+
+					if($value === '' || $value === null)
+					{
+						// New block start
+						$stack[] = array('indent' => $indent, 'props' => array(), 'key' => $key);
+					}
+					else
+					{
+						// Property of current block
+						if(!empty($stack))
 						{
-							$disks[] = $capacity . ' ' . $model;
+							// Add to the top of the stack
+							$stack[count($stack) - 1]['props'][$key] = $value;
 						}
+					}
+				}
+
+				// Flush remaining stack
+				while(!empty($stack))
+				{
+					$item = array_pop($stack);
+					if(isset($item['props']['model']) && isset($item['props']['capacity']))
+					{
+						$is_volume = false;
+						foreach($stack as $parent)
+						{
+							if(isset($parent['key']) && $parent['key'] == 'volumes')
+							{
+								$is_volume = true;
+								break;
+							}
+						}
+						if(!$is_volume)
+						{
+							$found_items[] = $item['props'];
+						}
+					}
+				}
+
+				foreach($found_items as $item)
+				{
+					$capacity = $item['capacity'];
+					$model = $item['model'];
+
+					if(($cut = strpos($capacity, ' (')) !== false)
+					{
+						$capacity = substr($capacity, 0, $cut);
+					}
+
+					if(($cut = strpos($capacity, ' ')) !== false)
+					{
+						if(is_numeric(substr($capacity, 0, $cut)))
+						{
+							$capacity = floor(substr($capacity, 0, $cut)) . substr($capacity, $cut);
+						}
+					}
+
+					$capacity = str_replace(' GB', 'GB', $capacity);
+
+					if(!empty($capacity) && !empty($model))
+					{
+						$disks[] = $capacity . ' ' . $model;
 					}
 				}
 			}
