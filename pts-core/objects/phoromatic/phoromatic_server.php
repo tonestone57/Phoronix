@@ -763,14 +763,34 @@ class phoromatic_server
 				$system_ids[] = $sys;
 			}
 
+			$groups = array();
 			foreach(explode(',', $row['RunTargetGroups']) as $group)
 			{
-				if(empty($group))
-					continue;
+				if(!empty($group))
+				{
+					$groups[] = $group;
+				}
+			}
 
-				$stmt = phoromatic_server::$db->prepare('SELECT SystemID FROM phoromatic_systems WHERE AccountID = :account_id AND Groups LIKE :sgroup AND State > 0 ORDER BY Title ASC');
-				$stmt->bindValue(':account_id', $account_id);
-				$stmt->bindValue(':sgroup', '%#' . $group . '#%');
+			if(!empty($groups))
+			{
+				$query = 'SELECT SystemID FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
+				$params = array(':account_id' => $account_id);
+				$like_conditions = array();
+
+				foreach($groups as $i => $group)
+				{
+					$param_name = ':sgroup_' . $i;
+					$like_conditions[] = 'Groups LIKE ' . $param_name;
+					$params[$param_name] = '%#' . $group . '#%';
+				}
+				$query .= implode(' OR ', $like_conditions) . ') ORDER BY Title ASC';
+
+				$stmt = phoromatic_server::$db->prepare($query);
+				foreach($params as $key => $value)
+				{
+					$stmt->bindValue($key, $value);
+				}
 				$result = $stmt->execute();
 
 				while($result && $row = $result->fetchArray())
