@@ -812,6 +812,61 @@ class pts_client
 		}
 		pts_logger::update_log_cli_output_state();
 	}
+	public static function php_functions_to_check()
+	{
+		$functions_to_check = array(
+			'cli_set_process_title',
+			'ctype_alnum',
+			'ctype_digit',
+			'ctype_print',
+			'curl_init',
+			'filter_var',
+			'finfo_file',
+			'finfo_open',
+			'gzcompress',
+			'gzdeflate',
+			'gzinflate',
+			'hash_file',
+			'imageantialias',
+			'imagecreatefromgif',
+			'imagecreatefrompng',
+			'imagecreatefromstring',
+			'imagepng',
+			'imagettftext',
+			'json_decode',
+			'mime_content_type',
+			'pcntl_fork',
+			'pcntl_signal',
+			'posix_getpid',
+			'posix_getpwuid',
+			'posix_getuid',
+			'posix_isatty',
+			'posix_kill',
+			'posix_setsid',
+			'preg_replace',
+			'simplexml_load_string',
+			'socket_create_listen',
+			'sqlite_escape_string',
+			'ssh2_connect',
+			'stream_context_set_params',
+			'timezone_name_from_abbr',
+			'zip_open',
+			);
+		sort($functions_to_check);
+		return $functions_to_check;
+	}
+	public static function function_check($function)
+	{
+		if(PTS_IS_DEV_BUILD || pts_client::is_debug_mode())
+		{
+			if(!in_array($function, self::php_functions_to_check()))
+			{
+				// trigger_error('pts_client::function_check() called on ' . $function . ' not in php_functions_to_check() list', E_USER_NOTICE);
+			}
+		}
+
+		return function_exists($function);
+	}
 	public static function program_requirement_checks($only_show_required = false, $always_report = false)
 	{
 		$extension_checks = pts_needed_extensions();
