@@ -48,6 +48,12 @@ class phoromatic_system_claim implements pts_webui_interface
 
 				if(ssh2_auth_password($connection, $_POST['username'], $_POST['password']))
 				{
+					$server_ip = phoromatic_web_socket_server_ip();
+					$server_ip = pts_strings::keep_in_string($server_ip, pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DECIMAL | pts_strings::CHAR_DASH | pts_strings::CHAR_COLON | pts_strings::CHAR_UNDERSCORE);
+
+					$server_addr = phoromatic_web_socket_server_addr();
+					$server_addr = pts_strings::keep_in_string($server_addr, pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DECIMAL | pts_strings::CHAR_DASH | pts_strings::CHAR_COLON | pts_strings::CHAR_SLASH | pts_strings::CHAR_UNDERSCORE);
+
 					$tmp_local_file = tempnam('/tmp', 'pts-ssh');
 					$tmp_remote_file = 'pts-ssh-' . rand(9999, 99999);
 
@@ -60,9 +66,9 @@ class phoromatic_system_claim implements pts_webui_interface
 				PHORO_FILE_PATH=$HOME/.phoronix-test-suite/
 			fi
 
-			echo ' . escapeshellarg(phoromatic_web_socket_server_ip()) . ' >> $PHORO_FILE_PATH/phoromatic-servers
+			echo ' . escapeshellarg($server_ip) . ' >> $PHORO_FILE_PATH/phoromatic-servers
 			mkdir -p $PHORO_FILE_PATH/modules-data/phoromatic
-			echo ' . escapeshellarg(phoromatic_web_socket_server_addr()) . ' > $PHORO_FILE_PATH/modules-data/phoromatic/last-phoromatic-server
+			echo ' . escapeshellarg($server_addr) . ' > $PHORO_FILE_PATH/modules-data/phoromatic/last-phoromatic-server
 			');
 
 					ssh2_scp_send($connection, $tmp_local_file, $tmp_remote_file);
