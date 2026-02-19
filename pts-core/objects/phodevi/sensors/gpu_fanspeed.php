@@ -26,6 +26,53 @@ class gpu_fanspeed extends phodevi_sensor
 	const SENSOR_SENSES = 'fan-speed';
 	const SENSOR_UNIT = 'Percent';
 
+	private $fan_to_monitor = null;
+
+	function __construct($instance, $parameter)
+	{
+		parent::__construct($instance, $parameter);
+
+		if($parameter !== NULL)
+		{
+			$this->fan_to_monitor = $parameter;
+		}
+		else
+		{
+			$fans = self::get_supported_devices();
+			if($fans != null)
+			{
+				$this->fan_to_monitor = $fans[0];
+			}
+		}
+	}
+
+	public static function get_supported_devices()
+	{
+		$supported = null;
+
+		if(phodevi::is_nvidia_graphics())
+		{
+			$i = 0;
+			// Iterate fans until we find one that doesn't exist
+			while(true)
+			{
+				$check_fan = '[fan:' . $i . ']/GPUCurrentFanSpeed';
+				if(phodevi_parser::read_nvidia_extension($check_fan) === false)
+				{
+					break;
+				}
+
+				if($supported == null) $supported = array();
+				$supported[] = 'fan:' . $i;
+				$i++;
+
+				if($i > 16) break; // Safety break
+			}
+		}
+
+		return $supported;
+	}
+
 	public function read_sensor()
 	{
 		// Report graphics processor fan speed as a percent
@@ -38,9 +85,16 @@ class gpu_fanspeed extends phodevi_sensor
 		else if(phodevi::is_nvidia_graphics())
 		{
 			// NVIDIA fan speed reading support in NVIDIA 190.xx and newer
-			// TODO: support for multiple fans, also for reading GPUFanTarget to get appropriate fan
 			// nvidia-settings --describe GPUFanTarget 
-			$fan_speed = phodevi_parser::read_nvidia_extension('[fan:0]/GPUCurrentFanSpeed');
+
+			$fan_query = '[fan:0]/GPUCurrentFanSpeed';
+
+			if($this->fan_to_monitor != null && strpos($this->fan_to_monitor, 'fan:') === 0)
+			{
+				$fan_query = '[' . $this->fan_to_monitor . ']/GPUCurrentFanSpeed';
+			}
+
+			$fan_speed = phodevi_parser::read_nvidia_extension($fan_query);
 		}
 		else if($fan1_input = phodevi_linux_parser::read_sysfs_node('/sys/class/drm/card0/device/hwmon/hwmon*/fan1_input', 'POSITIVE_NUMERIC'))
 		{
