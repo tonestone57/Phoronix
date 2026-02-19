@@ -59,6 +59,15 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array_fill(0, 2000, 1e50), 'expected' => 1e50),
 				array('values' => array(2, 8, 32), 'expected' => 8),
 				array('values' => array(1e50, 1e-50), 'expected' => 1),
+				array('values' => array(-1, 1), 'expected' => NAN),
+				// Order dependent behavior: 0 returns 0 immediately, negative returns NAN immediately
+				array('values' => array(0, -1), 'expected' => 0),
+				array('values' => array(-1, 0), 'expected' => NAN),
+				array('values' => array('2', '8'), 'expected' => 4),
+				array('values' => array(NAN, 1), 'expected' => NAN),
+				array('values' => array(INF, 1), 'expected' => INF),
+				array('values' => array(true, true), 'expected' => 1),
+				array('values' => array(false, true), 'expected' => 0),
 			),
 		);
 
@@ -112,6 +121,11 @@ class debug_pts_math_test implements pts_option_interface
 
 	private static function is_approx_equal($a, $b, $epsilon = 0.00001)
 	{
+		if(is_float($a) && is_nan($a) && is_float($b) && is_nan($b))
+		{
+			return true;
+		}
+
 		if(is_numeric($a) && is_numeric($b))
 		{
 			if($a == $b)
