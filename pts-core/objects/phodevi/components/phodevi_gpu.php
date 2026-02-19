@@ -1281,14 +1281,9 @@ class phodevi_gpu extends phodevi_device_interface
 				{
 					$nv_gpus = shell_exec('nvidia-settings -q gpus 2>&1');
 
-					// TODO: search for more than one GPU
-					$nv_gpus = substr($nv_gpus, strpos($nv_gpus, '[0]'));
-					$nv_gpus = substr($nv_gpus, strpos($nv_gpus, '(') + 1);
-					$nv_gpus = substr($nv_gpus, 0, strpos($nv_gpus, ')'));
-
-					if(stripos($nv_gpus, 'GeForce') !== false || stripos($nv_gpus, 'Quadro') !== false)
+					if(preg_match_all('/^\s*\[\d+\]\s+.*?\((.+)\)/m', $nv_gpus, $matches))
 					{
-						$info = $nv_gpus;
+						$info = implode(' + ', $matches[1]);
 					}
 				}
 			}
