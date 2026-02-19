@@ -82,17 +82,17 @@ class pts_math
 			return 0;
 		}
 
+		if(in_array(0, $values))
+		{
+			return 0;
+		}
+
 		$sum_log = 0;
 
 		foreach($values as $v)
 		{
-			if($v <= 0)
+			if($v < 0)
 			{
-				if($v == 0)
-				{
-					return 0;
-				}
-
 				return NAN;
 			}
 
@@ -107,6 +107,10 @@ class pts_math
 		$sum = 0;
 		foreach($values as $v)
 		{
+			if($v == 0)
+			{
+				return 0;
+			}
 			$sum += 1 / $v;
 		}
 		return (1 / $sum) * count($values);
