@@ -38,7 +38,7 @@ class debug_pts_validation_test implements pts_option_interface
 				array('input' => 'Invalid!@#Chars', 'expected' => 'invalidchars'),
 				array('input' => 'A-B', 'expected' => 'a-b'),
 				array('input' => '   ', 'expected' => '---'),
-				array('input' => '', 'expected' => null),
+				array('input' => '', 'expected' => ''),
 				array('input' => 'a b c', 'expected' => 'a-b-c'),
 				array('input' => 'CamelCase', 'expected' => 'camelcase'),
 				array('input' => 'Mixed 123-Text', 'expected' => 'mixed-123-text'),
