@@ -44,6 +44,10 @@ class debug_pts_validation_test implements pts_option_interface
 				array('input' => 'Mixed 123-Text', 'expected' => 'mixed-123-text'),
 				array('input' => 'Hello_World', 'expected' => 'helloworld'),
 				array('input' => 'Foo.Bar', 'expected' => 'foobar'),
+				array('input' => '!@#', 'expected' => ''),
+				array('input' => "Tab\tSpace", 'expected' => 'tabspace'),
+				array('input' => "New\nLine", 'expected' => 'newline'),
+				array('input' => '  LeadingTrailing  ', 'expected' => '--leadingtrailing--'),
 			),
 		);
 
@@ -59,7 +63,7 @@ class debug_pts_validation_test implements pts_option_interface
 
 				$input = $case['input'];
 				$result = pts_validation::$method($input);
-				$input_display = "'" . $input . "'";
+				$input_display = var_export($input, true);
 
 				echo "  $input_display ... ";
 
