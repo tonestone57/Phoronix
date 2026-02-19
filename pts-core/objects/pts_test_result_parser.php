@@ -1171,7 +1171,7 @@ class pts_test_result_parser
 					break;
 				case 'AVG_':
 					default:
-					$val = pts_math::arithmetic_mean($frame_time_values);
+					$val = pts_math::harmonic_mean($frame_time_values);
 					break;
 			}
 
