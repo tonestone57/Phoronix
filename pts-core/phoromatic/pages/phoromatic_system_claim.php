@@ -61,14 +61,14 @@ class phoromatic_system_claim implements pts_webui_interface
 			if [ -w /var/lib/phoronix-test-suite/ ]
 			then
 				PHORO_FILE_PATH=/var/lib/phoronix-test-suite/
-			elif [ -w $HOME/.phoronix-test-suite/ ]
+			elif [ -w "$HOME/.phoronix-test-suite/" ]
 			then
-				PHORO_FILE_PATH=$HOME/.phoronix-test-suite/
+				PHORO_FILE_PATH="$HOME/.phoronix-test-suite/"
 			fi
 
-			echo ' . escapeshellarg($server_ip) . ' >> $PHORO_FILE_PATH/phoromatic-servers
-			mkdir -p $PHORO_FILE_PATH/modules-data/phoromatic
-			echo ' . escapeshellarg($server_addr) . ' > $PHORO_FILE_PATH/modules-data/phoromatic/last-phoromatic-server
+			echo ' . escapeshellarg($server_ip) . ' >> "$PHORO_FILE_PATH/phoromatic-servers"
+			mkdir -p "$PHORO_FILE_PATH/modules-data/phoromatic"
+			echo ' . escapeshellarg($server_addr) . ' > "$PHORO_FILE_PATH/modules-data/phoromatic/last-phoromatic-server"
 			');
 
 					ssh2_scp_send($connection, $tmp_local_file, $tmp_remote_file);
