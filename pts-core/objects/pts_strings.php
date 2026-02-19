@@ -44,7 +44,17 @@ class pts_strings
 	public static function is_version($string)
 	{
 		// Only numeric or decimal, and at least a decimal (not int)
-		return pts_strings::string_only_contains($string, (pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DECIMAL)) && pts_strings::string_contains($string, pts_strings::CHAR_DECIMAL);
+		if(!pts_strings::string_only_contains($string, (pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DECIMAL)) || !pts_strings::string_contains($string, pts_strings::CHAR_DECIMAL))
+		{
+			return false;
+		}
+
+		if(substr($string, 0, 1) == '.' || substr($string, -1) == '.' || strpos($string, '..') !== false)
+		{
+			return false;
+		}
+
+		return true;
 	}
 	public static function is_alnum($string)
 	{
