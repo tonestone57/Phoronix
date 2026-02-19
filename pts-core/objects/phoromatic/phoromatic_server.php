@@ -1017,6 +1017,8 @@ class phoromatic_server
 		$result = $stmt->execute();
 		$scheduled_times = array();
 
+		$sys_groups = null;
+
 		while($result && $row = $result->fetchArray())
 		{
 			if(empty($row['RunAt']))
@@ -1027,16 +1029,25 @@ class phoromatic_server
 			// Make sure this test schedule is supposed to work on given system
 			if(!in_array($system_id, explode(',', $row['RunTargetSystems'])))
 			{
-				$stmt = phoromatic_server::$db->prepare('SELECT Groups FROM phoromatic_systems WHERE AccountID = :account_id AND SystemID = :system_id LIMIT 1');
-				$stmt->bindValue(':account_id', $account_id);
-				$stmt->bindValue(':system_id', $system_id);
-				$sys_result = $stmt->execute();
-				$sys_row = $sys_result ? $sys_result->fetchArray() : null;
+				if($sys_groups === null)
+				{
+					$stmt = phoromatic_server::$db->prepare('SELECT Groups FROM phoromatic_systems WHERE AccountID = :account_id AND SystemID = :system_id LIMIT 1');
+					$stmt->bindValue(':account_id', $account_id);
+					$stmt->bindValue(':system_id', $system_id);
+					$sys_result = $stmt->execute();
+					$sys_row = $sys_result ? $sys_result->fetchArray() : null;
+					$sys_groups = (isset($sys_row['Groups']) && !empty($sys_row['Groups'])) ? $sys_row['Groups'] : false;
+				}
+
+				if($sys_groups === false)
+				{
+					continue;
+				}
 
 				$matches_to_group = false;
 				foreach(explode(',', $row['RunTargetGroups']) as $group)
 				{
-					if(stripos($sys_row['Groups'], '#' . $group . '#') !== false)
+					if(stripos($sys_groups, '#' . $group . '#') !== false)
 					{
 						$matches_to_group = true;
 						break;
