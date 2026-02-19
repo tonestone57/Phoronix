@@ -41,6 +41,7 @@ class pts_client
 	private static $forked_pids = array();
 	private static $download_speed_average_count = -1;
 	private static $download_speed_average_speed = -1;
+	protected static $startup_pid = null;
 
 	public static function create_lock($lock_file)
 	{
@@ -143,6 +144,11 @@ class pts_client
 	public static function init()
 	{
 		pts_core::init();
+		if(function_exists('posix_getpid'))
+		{
+			self::$startup_pid = posix_getpid();
+		}
+
 		pts_define('PTS_COMMAND_PATH', PTS_CORE_PATH . 'commands/');
 
 		if(defined('QUICK_START') && QUICK_START)
@@ -1136,7 +1142,12 @@ class pts_client
 	}
 	public static function process_shutdown_tasks()
 	{
-		// TODO: possibly do something like posix_getpid() != pts_client::$startup_pid in case shutdown function is called from a child process
+		// Verify shutdown function is not called from a child process
+		if(function_exists('posix_getpid') && self::$startup_pid != null && posix_getpid() != self::$startup_pid)
+		{
+			return;
+		}
+
 		// Generate Phodevi Smart Cache
 		if(pts_env::read('NO_PHODEVI_CACHE') == false)
 		{
