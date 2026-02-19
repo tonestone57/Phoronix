@@ -60,16 +60,16 @@ class phoromatic_system_claim implements pts_webui_interface
 				PHORO_FILE_PATH=$HOME/.phoronix-test-suite/
 			fi
 
-			echo "' . phoromatic_web_socket_server_ip() . '" >> $PHORO_FILE_PATH/phoromatic-servers
+			echo ' . escapeshellarg(phoromatic_web_socket_server_ip()) . ' >> $PHORO_FILE_PATH/phoromatic-servers
 			mkdir -p $PHORO_FILE_PATH/modules-data/phoromatic
-			echo "' . phoromatic_web_socket_server_addr() . '" > $PHORO_FILE_PATH/modules-data/phoromatic/last-phoromatic-server
+			echo ' . escapeshellarg(phoromatic_web_socket_server_addr()) . ' > $PHORO_FILE_PATH/modules-data/phoromatic/last-phoromatic-server
 			');
 
 					ssh2_scp_send($connection, $tmp_local_file, $tmp_remote_file);
 					unlink($tmp_local_file);
 					ssh2_exec($connection, 'chmod +x ' . $tmp_remote_file);
 					ssh2_exec($connection, './' . $tmp_remote_file);
-					ssh2_exec($connection, 'rm' . $tmp_remote_file);
+					ssh2_exec($connection, 'rm ' . $tmp_remote_file);
 				}
 			}
 			if((isset($_POST['ip_claim']) && !empty($_POST['ip_claim'])) && isset($_POST['ping']) && verify_submission_token())

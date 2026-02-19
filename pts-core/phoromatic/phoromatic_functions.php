@@ -467,7 +467,7 @@ function phoromatic_account_system_count()
 }
 function phoromatic_web_socket_server_ip()
 {
-	$server_ip = $_SERVER['HTTP_HOST'];
+	$server_ip = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 	if(($x = strpos($server_ip, ':')) !== false)
 	{
 		$server_ip = substr($server_ip, 0, $x);
@@ -482,7 +482,7 @@ function phoromatic_web_socket_server_ip()
 		}
 	}
 	// getenv('PTS_WEBSOCKET_PORT')
-	return $server_ip . ':' . $_SERVER['SERVER_PORT'];
+	return pts_strings::simple($server_ip) . ':' . (isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : 80);
 }
 function phoromatic_web_socket_server_addr()
 {
