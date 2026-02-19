@@ -68,11 +68,17 @@ class debug_pts_strings_test implements pts_option_interface
 				array('input' => 'Abc', 'expected' => false),
 				array('input' => 'abc', 'expected' => false),
 			),
-			'plural_handler' => array(
-				array('args' => array(1, 'apple'), 'expected' => '1 apple'),
-				array('args' => array(0, 'apple'), 'expected' => '0 apples'),
-				array('args' => array(2, 'apple'), 'expected' => '2 apples'),
-				array('args' => array(10, 'benchmark'), 'expected' => '10 benchmarks'),
+			'trim_spaces' => array(
+				array('input' => 'Hello World', 'expected' => 'Hello World'),
+				array('input' => 'Hello  World', 'expected' => 'Hello World'),
+				array('input' => '  Hello World', 'expected' => 'Hello World'),
+				array('input' => 'Hello World  ', 'expected' => 'Hello World'),
+				array('input' => '  Hello   World  ', 'expected' => 'Hello World'),
+				array('input' => '', 'expected' => ''),
+				array('input' => '   ', 'expected' => ''),
+				array('input' => 'A B C', 'expected' => 'A B C'),
+				array('input' => 'A  B   C', 'expected' => 'A B C'),
+				array('input' => '   a   b   c   ', 'expected' => 'a b c'),
 			),
 		);
 
