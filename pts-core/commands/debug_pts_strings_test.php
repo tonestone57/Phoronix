@@ -113,6 +113,73 @@ class debug_pts_strings_test implements pts_option_interface
 				array('args' => array('1,000', 'apple'), 'expected' => '1,000 apples'),
 				array('args' => array(null, 'apple'), 'expected' => ' apples'),
 			),
+			'char_is_of_type' => array(
+				// CHAR_LETTER
+				array('args' => array('A', pts_strings::CHAR_LETTER), 'expected' => true),
+				array('args' => array('z', pts_strings::CHAR_LETTER), 'expected' => true),
+				array('args' => array('1', pts_strings::CHAR_LETTER), 'expected' => false),
+				array('args' => array('@', pts_strings::CHAR_LETTER), 'expected' => false),
+
+				// CHAR_NUMERIC
+				array('args' => array('0', pts_strings::CHAR_NUMERIC), 'expected' => true),
+				array('args' => array('9', pts_strings::CHAR_NUMERIC), 'expected' => true),
+				array('args' => array('a', pts_strings::CHAR_NUMERIC), 'expected' => false),
+
+				// CHAR_DECIMAL
+				array('args' => array('.', pts_strings::CHAR_DECIMAL), 'expected' => true),
+				array('args' => array(',', pts_strings::CHAR_DECIMAL), 'expected' => false),
+
+				// CHAR_SPACE
+				array('args' => array(' ', pts_strings::CHAR_SPACE), 'expected' => true),
+				array('args' => array('a', pts_strings::CHAR_SPACE), 'expected' => false),
+
+				// CHAR_DASH
+				array('args' => array('-', pts_strings::CHAR_DASH), 'expected' => true),
+				array('args' => array('_', pts_strings::CHAR_DASH), 'expected' => false),
+
+				// CHAR_UNDERSCORE
+				array('args' => array('_', pts_strings::CHAR_UNDERSCORE), 'expected' => true),
+				array('args' => array('-', pts_strings::CHAR_UNDERSCORE), 'expected' => false),
+
+				// CHAR_COLON
+				array('args' => array(':', pts_strings::CHAR_COLON), 'expected' => true),
+				array('args' => array(';', pts_strings::CHAR_COLON), 'expected' => false),
+
+				// CHAR_COMMA
+				array('args' => array(',', pts_strings::CHAR_COMMA), 'expected' => true),
+				array('args' => array('.', pts_strings::CHAR_COMMA), 'expected' => false),
+
+				// CHAR_SLASH
+				array('args' => array('/', pts_strings::CHAR_SLASH), 'expected' => true),
+				array('args' => array('\\', pts_strings::CHAR_SLASH), 'expected' => true),
+				array('args' => array('|', pts_strings::CHAR_SLASH), 'expected' => false),
+
+				// CHAR_AT
+				array('args' => array('@', pts_strings::CHAR_AT), 'expected' => true),
+				array('args' => array('a', pts_strings::CHAR_AT), 'expected' => false),
+
+				// CHAR_PLUS
+				array('args' => array('+', pts_strings::CHAR_PLUS), 'expected' => true),
+				array('args' => array('-', pts_strings::CHAR_PLUS), 'expected' => false),
+
+				// CHAR_SEMICOLON
+				array('args' => array(';', pts_strings::CHAR_SEMICOLON), 'expected' => true),
+				array('args' => array(':', pts_strings::CHAR_SEMICOLON), 'expected' => false),
+
+				// CHAR_EQUAL
+				array('args' => array('=', pts_strings::CHAR_EQUAL), 'expected' => true),
+				array('args' => array('+', pts_strings::CHAR_EQUAL), 'expected' => false),
+
+				// Combined attributes
+				array('args' => array('A', pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC), 'expected' => true),
+				array('args' => array('1', pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC), 'expected' => true),
+				array('args' => array('.', pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC), 'expected' => false),
+				array('args' => array(' ', pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC), 'expected' => false),
+
+				array('args' => array('.', pts_strings::CHAR_DECIMAL | pts_strings::CHAR_COMMA), 'expected' => true),
+				array('args' => array(',', pts_strings::CHAR_DECIMAL | pts_strings::CHAR_COMMA), 'expected' => true),
+				array('args' => array('a', pts_strings::CHAR_DECIMAL | pts_strings::CHAR_COMMA), 'expected' => false),
+			),
 		);
 
 		foreach ($test_suites as $method => $test_cases)
