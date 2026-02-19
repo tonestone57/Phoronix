@@ -27,36 +27,57 @@ class debug_pts_math_test implements pts_option_interface
 
 	public static function run($r)
 	{
-		$test_cases = array(
-			array('values' => array(1, 2, 3), 'expected' => 2),
-			array('values' => array(10, 20, 30, 40), 'expected' => 25),
-			array('values' => array(5), 'expected' => 5),
-			array('values' => array(-1, 1), 'expected' => 0),
-			array('values' => array(1.5, 2.5), 'expected' => 2),
-			array('values' => array(), 'expected' => 0),
+		$test_functions = array(
+			'arithmetic_mean' => array(
+				array('values' => array(1, 2, 3), 'expected' => 2),
+				array('values' => array(10, 20, 30, 40), 'expected' => 25),
+				array('values' => array(5), 'expected' => 5),
+				array('values' => array(-1, 1), 'expected' => 0),
+				array('values' => array(1.5, 2.5), 'expected' => 2),
+				array('values' => array(), 'expected' => 0),
+			),
+			'geometric_mean' => array(
+				array('values' => array(1, 2, 4), 'expected' => 2),
+				array('values' => array(3, 9, 27), 'expected' => 9),
+				array('values' => array(5), 'expected' => 5),
+				array('values' => array(2, 2, 2, 2, 2, 2, 2, 2, 2), 'expected' => 2),
+				array('values' => array(), 'expected' => 0),
+				array('values' => array(1.1, 2.2, 3.3), 'expected' => 1.9988326521154),
+				array('values' => array(0, 10, 100), 'expected' => 0),
+			),
 		);
 
 		$passed = 0;
 		$failed = 0;
 
-		foreach($test_cases as $case)
+		foreach($test_functions as $func => $test_cases)
 		{
-			$values = $case['values'];
-			$expected = $case['expected'];
-
-			echo "Testing arithmetic_mean([" . implode(', ', $values) . "]) ... ";
-
-			$result = pts_math::arithmetic_mean($values);
-
-			if ($result == $expected)
+			foreach($test_cases as $case)
 			{
-				echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
-				$passed++;
-			}
-			else
-			{
-				echo pts_client::cli_colored_text("FAILED", "red") . " (Expected $expected, got " . (is_null($result) ? 'NULL' : $result) . ")" . PHP_EOL;
-				$failed++;
+				$values = $case['values'];
+				$expected = $case['expected'];
+
+				echo "Testing $func([" . implode(', ', $values) . "]) ... ";
+
+				$result = pts_math::$func($values);
+
+				$is_pass = false;
+
+				if(abs($result - $expected) < 0.0001)
+				{
+					$is_pass = true;
+				}
+
+				if($is_pass)
+				{
+					echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
+					$passed++;
+				}
+				else
+				{
+					echo pts_client::cli_colored_text("FAILED", "red") . " (Expected $expected, got " . (is_null($result) ? 'NULL' : $result) . ")" . PHP_EOL;
+					$failed++;
+				}
 			}
 		}
 
@@ -67,6 +88,15 @@ class debug_pts_math_test implements pts_option_interface
 		{
 			exit(1);
 		}
+	}
+
+	private static function is_approx_equal($a, $b, $epsilon = 0.00001)
+	{
+		if(is_numeric($a) && is_numeric($b))
+		{
+			return abs($a - $b) < $epsilon;
+		}
+		return $a == $b;
 	}
 }
 

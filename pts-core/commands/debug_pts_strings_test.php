@@ -88,12 +88,24 @@ class debug_pts_strings_test implements pts_option_interface
 
 			foreach ($test_cases as $case)
 			{
-				$input = $case['input'];
 				$expected = $case['expected'];
+				$result = null;
+				$input_display = null;
 
-				$result = pts_strings::$method($input);
+				if(isset($case['args']))
+				{
+					$result = call_user_func_array(array('pts_strings', $method), $case['args']);
+					$input_display = implode(', ', array_map(function($v) { return var_export($v, true); }, $case['args']));
+				}
+				else
+				{
+					$input = $case['input'];
+					$result = pts_strings::$method($input);
+					// Mimic original output format which was '$input'
+					$input_display = "'" . $input . "'";
+				}
 
-				echo "  '$input' ... ";
+				echo "  $input_display ... ";
 
 				if ($result === $expected)
 				{
