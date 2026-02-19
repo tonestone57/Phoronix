@@ -38,7 +38,7 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(PHP_INT_MAX, PHP_INT_MAX), 'expected' => PHP_INT_MAX),
 				array('values' => array(PHP_INT_MIN, PHP_INT_MIN), 'expected' => PHP_INT_MIN),
 				array('values' => array(PHP_INT_MAX, PHP_INT_MIN), 'expected' => -0.5),
-				array('values' => array(0.1, 0.2), 'expected' => 0.15),
+				array('values' => array(0.25, 0.75), 'expected' => 0.5),
 				array('values' => array('10', '20'), 'expected' => 15),
 				array('values' => array('a' => 10, 'b' => 20), 'expected' => 15),
 				array('values' => array(true, false, true), 'expected' => 2/3),
