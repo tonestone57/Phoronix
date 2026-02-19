@@ -129,6 +129,16 @@ class debug_pts_strings_test implements pts_option_interface
 				array('args' => array(false, 'apple'), 'expected' => ' apples'),
 				array('args' => array('', 'apple'), 'expected' => ' apples'),
 				array('args' => array('0', 'apple'), 'expected' => '0 apples'),
+				array('args' => array(0.5, 'test'), 'expected' => '0.5 tests'),
+				array('args' => array('0.5', 'test'), 'expected' => '0.5 tests'),
+				array('args' => array('one', 'test'), 'expected' => 'one tests'),
+				array('args' => array(2, 'cherry'), 'expected' => '2 cherrys'),
+				array('args' => array(1.0, 'test'), 'expected' => '1 test'),
+				array('args' => array('1.0', 'test'), 'expected' => '1.0 test'),
+				array('args' => array('0', 'test'), 'expected' => '0 tests'),
+				array('args' => array('', 'test'), 'expected' => ' tests'),
+				array('args' => array(true, 'test'), 'expected' => '1 test'),
+				array('args' => array(false, 'test'), 'expected' => ' tests'),
 			),
 			'char_is_of_type' => array(
 				// CHAR_LETTER

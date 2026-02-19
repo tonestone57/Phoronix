@@ -23,7 +23,7 @@
 class debug_pts_math_test implements pts_option_interface
 {
 	const doc_section = 'Debugging';
-	const doc_description = 'Unit tests for pts_math::arithmetic_mean';
+	const doc_description = 'Unit tests for pts_math';
 
 	public static function run($r)
 	{
@@ -39,10 +39,12 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(PHP_INT_MIN, PHP_INT_MIN), 'expected' => PHP_INT_MIN),
 				array('values' => array(PHP_INT_MAX, PHP_INT_MIN), 'expected' => -0.5),
 				array('values' => array(0.25, 0.75), 'expected' => 0.5),
+				array('values' => array(0.5, 0.25), 'expected' => 0.375),
 				array('values' => array('10', '20'), 'expected' => 15),
 				array('values' => array('a' => 10, 'b' => 20), 'expected' => 15),
 				array('values' => array(true, false, true), 'expected' => 2/3),
 				array('values' => array(null), 'expected' => 0),
+				array('values' => array(null, null), 'expected' => 0),
 				array('values' => array(10, null), 'expected' => 5),
 				array('values' => null, 'expected' => 0),
 				array('values' => 5, 'expected' => 0),
@@ -73,6 +75,16 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(true, true), 'expected' => 1),
 				array('values' => array(false, true), 'expected' => 0),
 			),
+			'set_precision' => array(
+				array('args' => array(123, 2), 'expected' => '123.00'),
+				array('args' => array(1.2345, 2), 'expected' => '1.23'),
+				array('args' => array(1.2, 3), 'expected' => '1.200'),
+				array('args' => array(1.23, 2), 'expected' => '1.23'),
+				array('args' => array(-1.234, 2), 'expected' => '-1.23'),
+				array('args' => array("abc", 2), 'expected' => "abc"),
+				// Test default precision (2)
+				array('args' => array(1.2345), 'expected' => '1.23'),
+			),
 		);
 
 		$passed = 0;
@@ -82,24 +94,36 @@ class debug_pts_math_test implements pts_option_interface
 		{
 			foreach($test_cases as $case)
 			{
-				$values = $case['values'];
-				$expected = $case['expected'];
+				$result = null;
 
-				if(is_array($values))
+				if(isset($case['args']))
 				{
-					$values_str = implode(', ', array_slice($values, 0, 10));
-					if(count($values) > 10)
-					{
-						$values_str .= ', ... (' . count($values) . ' items)';
-					}
-					echo "Testing $func([" . $values_str . "]) ... ";
+					$args = $case['args'];
+					$expected = $case['expected'];
+					echo "Testing $func(" . implode(', ', array_map(function($v){ return var_export($v, true); }, $args)) . ") ... ";
+					$result = call_user_func_array(array('pts_math', $func), $args);
 				}
 				else
 				{
-					echo "Testing $func(" . var_export($values, true) . ") ... ";
-				}
+					$values = $case['values'];
+					$expected = $case['expected'];
 
-				$result = pts_math::$func($values);
+					if(is_array($values))
+					{
+						$values_str = implode(', ', array_slice($values, 0, 10));
+						if(count($values) > 10)
+						{
+							$values_str .= ', ... (' . count($values) . ' items)';
+						}
+						echo "Testing $func([" . $values_str . "]) ... ";
+					}
+					else
+					{
+						echo "Testing $func(" . var_export($values, true) . ") ... ";
+					}
+
+					$result = pts_math::$func($values);
+				}
 
 				$is_pass = false;
 
@@ -115,7 +139,7 @@ class debug_pts_math_test implements pts_option_interface
 				}
 				else
 				{
-					echo pts_client::cli_colored_text("FAILED", "red") . " (Expected $expected, got " . (is_null($result) ? 'NULL' : $result) . ")" . PHP_EOL;
+					echo pts_client::cli_colored_text("FAILED", "red") . " (Expected " . var_export($expected, true) . ", got " . (is_null($result) ? 'NULL' : var_export($result, true)) . ")" . PHP_EOL;
 					$failed++;
 				}
 			}
