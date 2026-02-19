@@ -241,11 +241,11 @@ class phoromatic_welcome implements pts_webui_interface
 						</li>
 						<li class="label_input_wrapper">
 							<label for="r_password">Password</label>
-							<input type="password" name="register_password" id="r_password" required/>
+							<input type="password" name="register_password" id="r_password" minlength="8" required/>
 						</li>
 						<li class="label_input_wrapper">
 							<label for="c_password">Confirm Password</label>
-							<input type="password" name="register_password_confirm" id="c_password" required/>
+							<input type="password" name="register_password_confirm" id="c_password" minlength="8" required/>
 						</li>
 						<li class="label_input_wrapper">
 							<label for="r_email">Email Address</label>

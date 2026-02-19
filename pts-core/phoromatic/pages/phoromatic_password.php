@@ -47,9 +47,9 @@ class phoromatic_password implements pts_webui_interface
 
 				if($account_salt != null && hash('sha256', $account_salt . $_POST['old_password']) == $hashed_password)
 				{
-					if(strlen($_POST['register_password']) < 6)
+					if(strlen($_POST['register_password']) < 8)
 					{
-						phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least six characters long.');
+						phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least eight characters long.');
 						return false;
 					}
 					if($_POST['register_password'] != $_POST['register_password_confirm'])
@@ -92,7 +92,7 @@ class phoromatic_password implements pts_webui_interface
 			<p style="height: 50px;"><input type="submit" value="Change Password" /></p>
 			</div>
 		</div>
-		<p style="clear: both;"><sup>1</sup> Passwords shall be at least six characters long.</p>';
+		<p style="clear: both;"><sup>1</sup> Passwords shall be at least eight characters long.</p>';
 
 		echo phoromatic_webui_main($main, phoromatic_webui_right_panel_logged_in());
 		echo phoromatic_webui_footer();

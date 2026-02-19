@@ -160,9 +160,9 @@ function phoromatic_initial_registration(form)
 		alert("Please enter a user-name of at least four characters, without spaces.");
 		return false;
 	}
-	if(form.register_password.value.length < 6)
+	if(form.register_password.value.length < 8)
 	{
-		alert("Please enter a password of at least six characters.");
+		alert("Please enter a password of at least eight characters.");
 		return false;
 	}
 	if(form.register_password_confirm.value != form.register_password.value)
@@ -205,9 +205,9 @@ function phoromatic_password_reset(form)
 		alert("Please enter a valid password; it should be at least six characters long.");
 		return false;
 	}
-	if(form.register_password.value.length < 6)
+	if(form.register_password.value.length < 8)
 	{
-		alert("Please enter a valid password; it should be at least six characters long.");
+		alert("Please enter a valid password; it should be at least eight characters long.");
 		return false;
 	}
 	if(form.register_password.value != form.register_password_confirm.value)

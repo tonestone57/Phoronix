@@ -64,9 +64,9 @@ class phoromatic_users implements pts_webui_interface
 				phoromatic_error_page('Oops!', $_POST['username'] . ' is a reserved and common username that may be used for other purposes, please make a different selection.');
 				return false;
 			}
-			if(strlen($_POST['password']) < 6)
+			if(strlen($_POST['password']) < 8)
 			{
-				phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least six characters long.');
+				phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least eight characters long.');
 				return false;
 			}
 			if($_POST['password'] != $_POST['confirm_password'])
