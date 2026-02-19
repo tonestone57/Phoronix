@@ -34,6 +34,11 @@ class debug_pts_math_test implements pts_option_interface
 			array('values' => array(-1, 1), 'expected' => 0),
 			array('values' => array(1.5, 2.5), 'expected' => 2),
 			array('values' => array(), 'expected' => 0),
+			array('values' => array(1.1, 2.2, 3.3), 'expected' => 2.2),
+			array('values' => array('1', '2', '3'), 'expected' => 2),
+			array('values' => array('a' => 10, 'b' => 20), 'expected' => 15),
+			array('values' => array(PHP_INT_MAX, PHP_INT_MAX), 'expected' => (float)PHP_INT_MAX),
+			array('values' => array(0), 'expected' => 0),
 		);
 
 		$passed = 0;
@@ -48,7 +53,7 @@ class debug_pts_math_test implements pts_option_interface
 
 			$result = pts_math::arithmetic_mean($values);
 
-			if ($result == $expected)
+			if (self::is_approx_equal($result, $expected))
 			{
 				echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
 				$passed++;
@@ -67,6 +72,15 @@ class debug_pts_math_test implements pts_option_interface
 		{
 			exit(1);
 		}
+	}
+
+	private static function is_approx_equal($a, $b, $epsilon = 0.00001)
+	{
+		if(is_numeric($a) && is_numeric($b))
+		{
+			return abs($a - $b) < $epsilon;
+		}
+		return $a == $b;
 	}
 }
 
