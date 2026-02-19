@@ -751,32 +751,43 @@ class phoromatic_server
 
 		if(is_array($groups) && !empty($groups))
 		{
-			$query = 'SELECT SystemID, Groups FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
-			$params = array(':account_id' => $account_id);
-			$like_conditions = array();
-
-			foreach($groups as $i => $group)
+			// Chunk queries to avoid SQLite limits on expression tree depth / parameter count
+			foreach(array_chunk($groups, 50) as $chunk_groups)
 			{
-				$param_name = ':sgroup_' . $i;
-				$like_conditions[] = 'Groups LIKE ' . $param_name;
-				$params[$param_name] = '%#' . $group . '#%';
-			}
-			$query .= implode(' OR ', $like_conditions) . ') ORDER BY Title ASC';
+				$query = 'SELECT SystemID, Groups, Title FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
+				$params = array(':account_id' => $account_id);
+				$like_conditions = array();
 
-			$stmt = phoromatic_server::$db->prepare($query);
-			foreach($params as $key => $value)
-			{
-				$stmt->bindValue($key, $value);
-			}
-			$result = $stmt->execute();
+				foreach($chunk_groups as $i => $group)
+				{
+					$param_name = ':sgroup_' . $i;
+					$like_conditions[] = 'Groups LIKE ' . $param_name;
+					$params[$param_name] = '%#' . $group . '#%';
+				}
+				$query .= implode(' OR ', $like_conditions) . ')'; // Sorting done in PHP later
 
-			while($result && $row = $result->fetchArray())
-			{
-				$system_rows[] = $row;
+				$stmt = phoromatic_server::$db->prepare($query);
+				foreach($params as $key => $value)
+				{
+					$stmt->bindValue($key, $value);
+				}
+				$result = $stmt->execute();
+
+				while($result && $row = $result->fetchArray())
+				{
+					if(!isset($system_rows[$row['SystemID']]))
+					{
+						$system_rows[$row['SystemID']] = $row;
+					}
+				}
 			}
+
+			usort($system_rows, function($a, $b) {
+				return strnatcasecmp($a['Title'], $b['Title']);
+			});
 		}
 
-		return $system_rows;
+		return array_values($system_rows);
 	}
 	public static function systems_associated_with_schedule($account_id, $schedule_id)
 	{
