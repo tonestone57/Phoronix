@@ -68,6 +68,12 @@ class debug_pts_strings_test implements pts_option_interface
 				array('input' => 'Abc', 'expected' => false),
 				array('input' => 'abc', 'expected' => false),
 			),
+			'plural_handler' => array(
+				array('args' => array(1, 'apple'), 'expected' => '1 apple'),
+				array('args' => array(0, 'apple'), 'expected' => '0 apples'),
+				array('args' => array(2, 'apple'), 'expected' => '2 apples'),
+				array('args' => array(10, 'benchmark'), 'expected' => '10 benchmarks'),
+			),
 		);
 
 		foreach ($test_suites as $method => $test_cases)
@@ -76,12 +82,24 @@ class debug_pts_strings_test implements pts_option_interface
 
 			foreach ($test_cases as $case)
 			{
-				$input = $case['input'];
 				$expected = $case['expected'];
+				$result = null;
+				$input_display = null;
 
-				$result = pts_strings::$method($input);
+				if(isset($case['args']))
+				{
+					$result = call_user_func_array(array('pts_strings', $method), $case['args']);
+					$input_display = implode(', ', array_map(function($v) { return var_export($v, true); }, $case['args']));
+				}
+				else
+				{
+					$input = $case['input'];
+					$result = pts_strings::$method($input);
+					// Mimic original output format which was '$input'
+					$input_display = "'" . $input . "'";
+				}
 
-				echo "  '$input' ... ";
+				echo "  $input_display ... ";
 
 				if ($result === $expected)
 				{
