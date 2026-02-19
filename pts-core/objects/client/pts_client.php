@@ -148,6 +148,10 @@ class pts_client
 		{
 			self::$startup_pid = posix_getpid();
 		}
+		else
+		{
+			self::$startup_pid = getmypid();
+		}
 
 		pts_define('PTS_COMMAND_PATH', PTS_CORE_PATH . 'commands/');
 
@@ -1198,7 +1202,9 @@ class pts_client
 	public static function process_shutdown_tasks()
 	{
 		// Verify shutdown function is not called from a child process
-		if(function_exists('posix_getpid') && self::$startup_pid != null && posix_getpid() != self::$startup_pid)
+		$current_pid = function_exists('posix_getpid') ? posix_getpid() : getmypid();
+
+		if(self::$startup_pid != null && $current_pid != self::$startup_pid)
 		{
 			return;
 		}
