@@ -40,6 +40,10 @@ class phodevi_osx_parser
 
 		return self::$cached_results[$command];
 	}
+	public static function get_system_profiler_lines($data_type, $cache = true)
+	{
+		return self::run_command_to_lines_cached('system_profiler ' . $data_type . ' 2>&1', $cache);
+	}
 	public static function read_osx_system_profiler($data_type, $object, $multiple_objects = false, $ignore_values = array(), $cache = true)
 	{
 		$value = ($multiple_objects ? array() : false);
