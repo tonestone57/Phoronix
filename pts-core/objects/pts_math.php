@@ -59,7 +59,14 @@ class pts_math
 	{
 		// simple code hits INF issue on large arrays
 		//return pow(array_product($values), (1 / count($values)));
-		$power = 1 / count($values);
+
+		$count = count($values);
+		if($count == 0)
+		{
+			return 0;
+		}
+
+		$power = 1 / $count;
 		$chunk_r = array();
 
 		foreach(array_chunk($values, 8) as $chunk)
