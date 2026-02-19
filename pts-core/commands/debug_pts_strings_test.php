@@ -91,6 +91,13 @@ class debug_pts_strings_test implements pts_option_interface
 				array('input' => 'A  B   C', 'expected' => 'A B C'),
 				array('input' => '   a   b   c   ', 'expected' => 'a b c'),
 			),
+			'plural_handler' => array(
+				array('args' => array(1, 'apple'), 'expected' => '1 apple'),
+				array('args' => array(2, 'apple'), 'expected' => '2 apples'),
+				array('args' => array(0, 'apple'), 'expected' => '0 apples'),
+				array('args' => array(-1, 'apple'), 'expected' => '-1 apples'),
+				array('args' => array(100, 'test'), 'expected' => '100 tests'),
+			),
 		);
 
 		foreach ($test_suites as $method => $test_cases)
