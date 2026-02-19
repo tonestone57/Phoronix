@@ -482,7 +482,7 @@ function phoromatic_web_socket_server_ip()
 		}
 	}
 	// getenv('PTS_WEBSOCKET_PORT')
-	return pts_strings::simple($server_ip) . ':' . (isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : 80);
+	return pts_strings::keep_in_string($server_ip, pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DECIMAL | pts_strings::CHAR_DASH | pts_strings::CHAR_COLON | pts_strings::CHAR_UNDERSCORE) . ':' . (isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : 80);
 }
 function phoromatic_web_socket_server_addr()
 {
