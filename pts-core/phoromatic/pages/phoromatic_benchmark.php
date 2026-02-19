@@ -120,21 +120,53 @@ class phoromatic_benchmark implements pts_webui_interface
 				if(!empty($row['RunTargetGroups']))
 				{
 					$main .= '<hr /><h1>Group Targets</h1><ol>';
+					$target_groups = array();
 					foreach(explode(',', $row['RunTargetGroups']) as $group)
 					{
-						if(empty($group))
-							continue;
+						if(!empty($group))
+						{
+							$target_groups[] = $group;
+						}
+					}
 
-						$main .= '<li><strong style="font-weight: 800;">' . $group . '</strong></li>';
+					if(!empty($target_groups))
+					{
+						$query = 'SELECT SystemID, Groups FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
+						$params = array(':account_id' => $_SESSION['AccountID']);
+						$like_conditions = array();
 
-						$stmt = phoromatic_server::$db->prepare('SELECT SystemID FROM phoromatic_systems WHERE AccountID = :account_id AND Groups LIKE :sgroup AND State > 0 ORDER BY Title ASC');
-						$stmt->bindValue(':account_id', $_SESSION['AccountID']);
-						$stmt->bindValue(':sgroup', '%#' . $group . '#%');
+						foreach($target_groups as $i => $group)
+						{
+							$param_name = ':sgroup_' . $i;
+							$like_conditions[] = 'Groups LIKE ' . $param_name;
+							$params[$param_name] = '%#' . $group . '#%';
+						}
+						$query .= implode(' OR ', $like_conditions) . ') ORDER BY Title ASC';
+
+						$stmt = phoromatic_server::$db->prepare($query);
+						foreach($params as $key => $value)
+						{
+							$stmt->bindValue($key, $value);
+						}
 						$result = $stmt->execute();
 
-						while($result && $row = $result->fetchArray())
+						$all_systems = array();
+						while($result && $s_row = $result->fetchArray())
 						{
-							$main .= '<li><a href="?systems/' . $row['SystemID'] . '">' . phoromatic_server::system_id_to_name($row['SystemID']) . '</a></li>';
+							$all_systems[] = $s_row;
+						}
+
+						foreach($target_groups as $group)
+						{
+							$main .= '<li><strong style="font-weight: 800;">' . $group . '</strong></li>';
+
+							foreach($all_systems as $s_row)
+							{
+								if(strpos($s_row['Groups'], '#' . $group . '#') !== false)
+								{
+									$main .= '<li><a href="?systems/' . $s_row['SystemID'] . '">' . phoromatic_server::system_id_to_name($s_row['SystemID']) . '</a></li>';
+								}
+							}
 						}
 					}
 				}
