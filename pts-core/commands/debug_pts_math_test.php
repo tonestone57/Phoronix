@@ -89,6 +89,15 @@ class debug_pts_math_test implements pts_option_interface
 			exit(1);
 		}
 	}
+
+	private static function is_approx_equal($a, $b, $epsilon = 0.00001)
+	{
+		if(is_numeric($a) && is_numeric($b))
+		{
+			return abs($a - $b) < $epsilon;
+		}
+		return $a == $b;
+	}
 }
 
 ?>
