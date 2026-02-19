@@ -69,6 +69,17 @@ class debug_pts_strings_test implements pts_option_interface
 				array('input' => '1.0 ', 'expected' => false),
 				array('input' => '1.2.3.4.5', 'expected' => true),
 				array('input' => '0.0', 'expected' => true),
+				array('input' => '1.00', 'expected' => true),
+				array('input' => '01.01', 'expected' => true),
+				array('input' => '1.2.3.4.5.6.7.8.9.10', 'expected' => true),
+				array('input' => '9999999999.9999999999', 'expected' => true),
+				array('input' => '-1.0', 'expected' => false),
+				array('input' => 1.1, 'expected' => true),
+				array('input' => 1.0, 'expected' => false),
+				array('input' => null, 'expected' => false),
+				array('input' => true, 'expected' => false),
+				array('input' => false, 'expected' => false),
+				array('input' => array(), 'expected' => false),
 			),
 			'is_alnum' => array(
 				array('input' => 'abc123', 'expected' => true),
@@ -208,7 +219,14 @@ class debug_pts_strings_test implements pts_option_interface
 					$input = $case['input'];
 					$result = pts_strings::$method($input);
 					// Mimic original output format which was '$input'
-					$input_display = "'" . $input . "'";
+					if(is_array($input))
+					{
+						$input_display = "Array";
+					}
+					else
+					{
+						$input_display = "'" . $input . "'";
+					}
 				}
 
 				echo "  $input_display ... ";
