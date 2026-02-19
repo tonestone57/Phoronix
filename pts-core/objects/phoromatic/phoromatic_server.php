@@ -745,6 +745,39 @@ class phoromatic_server
 
 		return $row;
 	}
+	public static function systems_in_groups($account_id, $groups)
+	{
+		$system_rows = array();
+
+		if(is_array($groups) && !empty($groups))
+		{
+			$query = 'SELECT SystemID, Groups FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
+			$params = array(':account_id' => $account_id);
+			$like_conditions = array();
+
+			foreach($groups as $i => $group)
+			{
+				$param_name = ':sgroup_' . $i;
+				$like_conditions[] = 'Groups LIKE ' . $param_name;
+				$params[$param_name] = '%#' . $group . '#%';
+			}
+			$query .= implode(' OR ', $like_conditions) . ') ORDER BY Title ASC';
+
+			$stmt = phoromatic_server::$db->prepare($query);
+			foreach($params as $key => $value)
+			{
+				$stmt->bindValue($key, $value);
+			}
+			$result = $stmt->execute();
+
+			while($result && $row = $result->fetchArray())
+			{
+				$system_rows[] = $row;
+			}
+		}
+
+		return $system_rows;
+	}
 	public static function systems_associated_with_schedule($account_id, $schedule_id)
 	{
 		$system_ids = array();
@@ -774,28 +807,9 @@ class phoromatic_server
 
 			if(!empty($groups))
 			{
-				$query = 'SELECT SystemID FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
-				$params = array(':account_id' => $account_id);
-				$like_conditions = array();
-
-				foreach($groups as $i => $group)
+				foreach(self::systems_in_groups($account_id, $groups) as $sys_row)
 				{
-					$param_name = ':sgroup_' . $i;
-					$like_conditions[] = 'Groups LIKE ' . $param_name;
-					$params[$param_name] = '%#' . $group . '#%';
-				}
-				$query .= implode(' OR ', $like_conditions) . ') ORDER BY Title ASC';
-
-				$stmt = phoromatic_server::$db->prepare($query);
-				foreach($params as $key => $value)
-				{
-					$stmt->bindValue($key, $value);
-				}
-				$result = $stmt->execute();
-
-				while($result && $row = $result->fetchArray())
-				{
-					$system_ids[] = $row['SystemID'];
+					$system_ids[] = $sys_row['SystemID'];
 				}
 			}
 		}

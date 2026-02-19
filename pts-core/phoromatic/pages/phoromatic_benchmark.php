@@ -129,43 +129,17 @@ class phoromatic_benchmark implements pts_webui_interface
 						}
 					}
 
-					if(!empty($target_groups))
+					$all_systems = phoromatic_server::systems_in_groups($_SESSION['AccountID'], $target_groups);
+
+					foreach($target_groups as $group)
 					{
-						$query = 'SELECT SystemID, Groups FROM phoromatic_systems WHERE AccountID = :account_id AND State > 0 AND (';
-						$params = array(':account_id' => $_SESSION['AccountID']);
-						$like_conditions = array();
+						$main .= '<li><strong style="font-weight: 800;">' . $group . '</strong></li>';
 
-						foreach($target_groups as $i => $group)
+						foreach($all_systems as $sys_row)
 						{
-							$param_name = ':sgroup_' . $i;
-							$like_conditions[] = 'Groups LIKE ' . $param_name;
-							$params[$param_name] = '%#' . $group . '#%';
-						}
-						$query .= implode(' OR ', $like_conditions) . ') ORDER BY Title ASC';
-
-						$stmt = phoromatic_server::$db->prepare($query);
-						foreach($params as $key => $value)
-						{
-							$stmt->bindValue($key, $value);
-						}
-						$result = $stmt->execute();
-
-						$all_systems = array();
-						while($result && $s_row = $result->fetchArray())
-						{
-							$all_systems[] = $s_row;
-						}
-
-						foreach($target_groups as $group)
-						{
-							$main .= '<li><strong style="font-weight: 800;">' . $group . '</strong></li>';
-
-							foreach($all_systems as $s_row)
+							if(strpos($sys_row['Groups'], '#' . $group . '#') !== false)
 							{
-								if(strpos($s_row['Groups'], '#' . $group . '#') !== false)
-								{
-									$main .= '<li><a href="?systems/' . $s_row['SystemID'] . '">' . phoromatic_server::system_id_to_name($s_row['SystemID']) . '</a></li>';
-								}
+								$main .= '<li><a href="?systems/' . $sys_row['SystemID'] . '">' . phoromatic_server::system_id_to_name($sys_row['SystemID']) . '</a></li>';
 							}
 						}
 					}
