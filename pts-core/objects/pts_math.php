@@ -52,6 +52,11 @@ class pts_math
 	}
 	public static function arithmetic_mean($values)
 	{
+		if(!is_array($values))
+		{
+			return 0;
+		}
+
 		$count = count($values);
 		return $count > 0 ? (array_sum($values) / $count) : 0;
 	}

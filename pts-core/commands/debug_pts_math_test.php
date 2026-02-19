@@ -44,6 +44,10 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(true, false, true), 'expected' => 2/3),
 				array('values' => array(null), 'expected' => 0),
 				array('values' => array(10, null), 'expected' => 5),
+				array('values' => null, 'expected' => 0),
+				array('values' => 5, 'expected' => 0),
+				array('values' => 'string', 'expected' => 0),
+				array('values' => new stdClass(), 'expected' => 0),
 			),
 			'geometric_mean' => array(
 				array('values' => array(1, 2, 4), 'expected' => 2),
@@ -72,12 +76,19 @@ class debug_pts_math_test implements pts_option_interface
 				$values = $case['values'];
 				$expected = $case['expected'];
 
-				$values_str = implode(', ', array_slice($values, 0, 10));
-				if(count($values) > 10)
+				if(is_array($values))
 				{
-					$values_str .= ', ... (' . count($values) . ' items)';
+					$values_str = implode(', ', array_slice($values, 0, 10));
+					if(count($values) > 10)
+					{
+						$values_str .= ', ... (' . count($values) . ' items)';
+					}
+					echo "Testing $func([" . $values_str . "]) ... ";
 				}
-				echo "Testing $func([" . $values_str . "]) ... ";
+				else
+				{
+					echo "Testing $func(" . var_export($values, true) . ") ... ";
+				}
 
 				$result = pts_math::$func($values);
 
