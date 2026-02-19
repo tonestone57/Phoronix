@@ -23,9 +23,26 @@
 class debug_pts_math_test implements pts_option_interface
 {
 	const doc_section = 'Debugging';
-	const doc_description = 'Unit tests for pts_math::arithmetic_mean';
+	const doc_description = 'Unit tests for pts_math';
 
 	public static function run($r)
+	{
+		$passed = 0;
+		$failed = 0;
+
+		self::test_arithmetic_mean($passed, $failed);
+		self::test_set_precision($passed, $failed);
+
+		echo PHP_EOL . "Tests passed: $passed" . PHP_EOL;
+		echo "Tests failed: $failed" . PHP_EOL;
+
+		if ($failed > 0)
+		{
+			exit(1);
+		}
+	}
+
+	public static function test_arithmetic_mean(&$passed, &$failed)
 	{
 		$test_cases = array(
 			array('values' => array(1, 2, 3), 'expected' => 2),
@@ -35,9 +52,6 @@ class debug_pts_math_test implements pts_option_interface
 			array('values' => array(1.5, 2.5), 'expected' => 2),
 			array('values' => array(), 'expected' => 0),
 		);
-
-		$passed = 0;
-		$failed = 0;
 
 		foreach($test_cases as $case)
 		{
@@ -59,13 +73,48 @@ class debug_pts_math_test implements pts_option_interface
 				$failed++;
 			}
 		}
+	}
 
-		echo PHP_EOL . "Tests passed: $passed" . PHP_EOL;
-		echo "Tests failed: $failed" . PHP_EOL;
+	public static function test_set_precision(&$passed, &$failed)
+	{
+		$test_cases = array(
+			array('number' => 123, 'precision' => 2, 'expected' => '123.00'),
+			array('number' => 1.2345, 'precision' => 2, 'expected' => '1.23'),
+			array('number' => 1.2, 'precision' => 3, 'expected' => '1.200'),
+			array('number' => 1.23, 'precision' => 2, 'expected' => '1.23'),
+			array('number' => -1.234, 'precision' => 2, 'expected' => '-1.23'),
+			array('number' => "abc", 'precision' => 2, 'expected' => "abc"),
+			// Test default precision (2)
+			array('number' => 1.2345, 'expected' => '1.23'),
+		);
 
-		if ($failed > 0)
+		foreach($test_cases as $case)
 		{
-			exit(1);
+			$number = $case['number'];
+			$expected = $case['expected'];
+			$precision = isset($case['precision']) ? $case['precision'] : 2;
+
+			echo "Testing set_precision($number, $precision) ... ";
+
+			if(isset($case['precision']))
+			{
+				$result = pts_math::set_precision($number, $precision);
+			}
+			else
+			{
+				$result = pts_math::set_precision($number);
+			}
+
+			if ($result === $expected)
+			{
+				echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
+				$passed++;
+			}
+			else
+			{
+				echo pts_client::cli_colored_text("FAILED", "red") . " (Expected '$expected', got '" . (is_null($result) ? 'NULL' : $result) . "')" . PHP_EOL;
+				$failed++;
+			}
 		}
 	}
 }
