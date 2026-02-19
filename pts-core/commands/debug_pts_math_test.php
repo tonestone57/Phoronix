@@ -35,6 +35,13 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(-1, 1), 'expected' => 0),
 				array('values' => array(1.5, 2.5), 'expected' => 2),
 				array('values' => array(), 'expected' => 0),
+				array('values' => array(PHP_INT_MAX, PHP_INT_MAX), 'expected' => PHP_INT_MAX),
+				array('values' => array(PHP_INT_MAX, PHP_INT_MIN), 'expected' => -0.5),
+				array('values' => array(0.5, 0.25), 'expected' => 0.375),
+				array('values' => array("10", "20"), 'expected' => 15),
+				array('values' => array('a' => 10, 'b' => 20), 'expected' => 15),
+				array('values' => array(true, false, true), 'expected' => 2/3),
+				array('values' => array(null, null), 'expected' => 0),
 			),
 			'geometric_mean' => array(
 				array('values' => array(1, 2, 4), 'expected' => 2),
