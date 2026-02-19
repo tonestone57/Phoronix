@@ -46,6 +46,10 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(0, 10, 100), 'expected' => 0),
 				array('values' => array_fill(0, 2000, 2), 'expected' => 2),
 				array('values' => array_fill(0, 2000, 0.5), 'expected' => 0.5),
+				array('values' => array_fill(0, 2000, 1e-100), 'expected' => 1e-100),
+				array('values' => array_fill(0, 2000, 1e50), 'expected' => 1e50),
+				array('values' => array(2, 8, 32), 'expected' => 8),
+				array('values' => array(1e50, 1e-50), 'expected' => 1),
 			),
 		);
 
@@ -70,7 +74,7 @@ class debug_pts_math_test implements pts_option_interface
 
 				$is_pass = false;
 
-				if(abs($result - $expected) < 0.0001)
+				if(self::is_approx_equal($result, $expected))
 				{
 					$is_pass = true;
 				}
@@ -101,7 +105,23 @@ class debug_pts_math_test implements pts_option_interface
 	{
 		if(is_numeric($a) && is_numeric($b))
 		{
-			return abs($a - $b) < $epsilon;
+			if($a == $b)
+			{
+				return true;
+			}
+
+			$diff = abs($a - $b);
+			if($diff < $epsilon)
+			{
+				return true;
+			}
+
+			if($a != 0 && $b != 0)
+			{
+				return ($diff / max(abs($a), abs($b))) < $epsilon;
+			}
+
+			return false;
 		}
 		return $a == $b;
 	}
