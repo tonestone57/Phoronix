@@ -54,9 +54,9 @@ class phoromatic_admin implements pts_webui_interface
 
 			if($account_salt != null)
 			{
-				if(strlen($_POST['new_user_password']) < 6)
+				if(strlen($_POST['new_user_password']) < 8)
 				{
-					phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least six characters long.');
+					phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least eight characters long.');
 					return false;
 				}
 
@@ -203,7 +203,7 @@ class phoromatic_admin implements pts_webui_interface
 		<p><input type="submit" value="Create Account" /></p>
 		</form>
 		<p style="font-size: 11px;"><sup>1</sup> Usernames shall be at least four characters long, not contain any spaces, and only be composed of normal ASCII characters.<br />
-		<sup>2</sup> Passwords shall be at least six characters long.<br />
+		<sup>2</sup> Passwords shall be at least eight characters long.<br />
 		<sup>3</sup> A valid email address is required for notifications, password reset, and other verification purposes.<br />
 		<sup>4</sup> The account ID field is optional and is used to pre-seed the account identifier for advanced purposes. The field must be six characters. Leave this field blank if you are unsure.<br />
 						</p>';

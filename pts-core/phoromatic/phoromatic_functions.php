@@ -565,9 +565,9 @@ function create_new_phoromatic_account($register_username, $register_password, $
 		phoromatic_error_page('Oops!', $register_username . ' is a reserved and common username that may be used for other purposes, please make a different selection.');
 		return false;
 	}
-	if(strlen($register_password) < 6)
+	if(strlen($register_password) < 8)
 	{
-		phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least six characters long.');
+		phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least eight characters long.');
 		return false;
 	}
 	if($register_password != $register_password_confirm)
