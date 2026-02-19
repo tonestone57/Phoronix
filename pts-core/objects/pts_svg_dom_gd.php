@@ -382,8 +382,13 @@ class pts_svg_dom_gd
 				}
 				if($a['stroke'] != null)
 				{
-					// TODO: implement $a['stroke-width']
+					$thickness = !empty($a['stroke-width']) ? $a['stroke-width'] : 1;
+					imagesetthickness($gd, $thickness);
 					imagerectangle($gd, $a['x'], $a['y'], ($a['x'] + $a['width']), ($a['y'] + $a['height']), self::gd_color_allocate($gd, $a['stroke']));
+					if($thickness != 1)
+					{
+						imagesetthickness($gd, 1);
+					}
 				}
 				break;
 			case 'circle':
