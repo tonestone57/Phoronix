@@ -97,6 +97,11 @@ class debug_pts_strings_test implements pts_option_interface
 				array('args' => array(0, 'apple'), 'expected' => '0 apples'),
 				array('args' => array(-1, 'apple'), 'expected' => '-1 apples'),
 				array('args' => array(100, 'test'), 'expected' => '100 tests'),
+				array('args' => array(1.5, 'apple'), 'expected' => '1.5 apples'),
+				array('args' => array('1', 'apple'), 'expected' => '1 apple'),
+				array('args' => array('2', 'apple'), 'expected' => '2 apples'),
+				array('args' => array('1,000', 'apple'), 'expected' => '1,000 apples'),
+				array('args' => array(null, 'apple'), 'expected' => ' apples'),
 			),
 		);
 
