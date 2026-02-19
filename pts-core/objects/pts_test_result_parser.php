@@ -103,11 +103,19 @@ class pts_test_result_parser
 				}
 				else
 				{
-					$sensor_values = array();
+					$first_write = true;
 					while(is_file($monitor_file)) // when test ends, it will remove file in case the posix_kill doesn't happen
 					{
-						$sensor_values[] = phodevi::read_sensor($sensor);
-						file_put_contents($monitor_file, implode("\n", $sensor_values));
+						$val = phodevi::read_sensor($sensor);
+						if($first_write)
+						{
+							file_put_contents($monitor_file, $val);
+							$first_write = false;
+						}
+						else
+						{
+							file_put_contents($monitor_file, "\n" . $val, FILE_APPEND);
+						}
 						usleep($polling_freq);
 					}
 					exit(0);
