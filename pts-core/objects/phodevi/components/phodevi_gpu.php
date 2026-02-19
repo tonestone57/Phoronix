@@ -859,9 +859,7 @@ class phodevi_gpu extends phodevi_device_interface
 		}
 		else if(phodevi::is_haiku())
 		{
-			// TODO: Implement proper VRAM detection for Haiku
-			// For now, listdev might not expose it easily.
-			$video_ram = -1;
+			$video_ram = phodevi_haiku_parser::read_gpu_memory();
 		}
 		else
 		{

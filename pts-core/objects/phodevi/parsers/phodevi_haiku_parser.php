@@ -2388,17 +2388,57 @@ class phodevi_haiku_parser
 
 	public static function read_gpu_memory()
 	{
-		// Difficult to get standardly on Haiku without specific driver info
-		// Try parsing syslog for VRAM
-		if(is_readable('/var/log/syslog'))
+		$video_ram = -1;
+
+		// 1. Try glxinfo
+		if(pts_client::executable_in_path('glxinfo'))
 		{
-			$syslog = shell_exec('grep "VRAM" /var/log/syslog | tail -n 1');
-			if(preg_match('/([0-9]+)\s*MB/', $syslog, $matches))
+			$glxinfo = shell_exec('glxinfo 2>&1');
+			if(preg_match('/Video memory:\s*([0-9]+)MB/i', $glxinfo, $matches))
 			{
-				return $matches[1];
+				$video_ram = $matches[1];
 			}
 		}
-		return null;
+
+		// 2. Try Vulkan Info (DEVICE_LOCAL_BIT heap)
+		if(($video_ram == -1 || $video_ram == 0) && pts_client::executable_in_path('vulkaninfo'))
+		{
+			$vulkaninfo = shell_exec('vulkaninfo 2>&1');
+			if(preg_match_all('/size\s*=\s*([0-9]+).{0,500}?MEMORY_HEAP_DEVICE_LOCAL_BIT/s', $vulkaninfo, $matches))
+			{
+				$max_vram = 0;
+				foreach($matches[1] as $size)
+				{
+					if($size > $max_vram) $max_vram = $size;
+				}
+				if($max_vram > 0)
+				{
+					$video_ram = round($max_vram / 1048576);
+				}
+			}
+		}
+
+		// 3. Try parsing syslog for VRAM (Haiku drivers)
+		if(($video_ram == -1 || $video_ram == 0) && is_readable('/var/log/syslog'))
+		{
+			// Grep is faster than reading whole file in PHP if file is huge
+			$syslog = shell_exec('grep -iE "VRAM|Video memory|memory:" /var/log/syslog | tail -n 50');
+
+			if(preg_match('/([0-9]+)MB video memory/i', $syslog, $matches))
+			{
+				$video_ram = $matches[1];
+			}
+			else if(preg_match('/memory:\s*([0-9]+)\s*MB/i', $syslog, $matches))
+			{
+				$video_ram = $matches[1];
+			}
+			else if(preg_match('/VRAM:\s*([0-9]+)\s*MB/i', $syslog, $matches))
+			{
+				$video_ram = $matches[1];
+			}
+		}
+
+		return $video_ram;
 	}
 
 	public static function read_opengl_version()
