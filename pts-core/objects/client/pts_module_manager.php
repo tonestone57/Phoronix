@@ -92,7 +92,7 @@ class pts_module_manager
 
 			if($module_val == null && defined($module . '::' . $process))
 			{
-				eval('$module_val = ' . $module . '::' . $process . ';');
+				$module_val = constant($module . '::' . $process);
 			}
 		}
 
