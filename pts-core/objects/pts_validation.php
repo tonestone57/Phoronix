@@ -594,7 +594,7 @@ class pts_validation
 	}
 	public static function string_to_sanitized_test_profile_base($input)
 	{
-		return pts_strings::keep_in_string(str_replace(' ', '-', strtolower($input)), pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DASH);;
+		return (string)pts_strings::keep_in_string(str_replace(' ', '-', strtolower($input)), pts_strings::CHAR_LETTER | pts_strings::CHAR_NUMERIC | pts_strings::CHAR_DASH);
 	}
 	protected static function generate_xsd_element_objects($xsd_file, $obj = null, $types = null)
 	{
