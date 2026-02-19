@@ -537,12 +537,6 @@ class pts_test_result_parser
 		$start_result_pos = strrpos($template, $key_for_result);
 		$test_results = array();
 
-		if($prefix != null && $start_result_pos === false && $template != 'csv-dump-frame-latencies' && $template != 'libframetime-output' && $e->get_file_format() == null)
-		{
-			// XXX: technically the $prefix check shouldn't be needed, verify whether safe to have this check be unconditional on start_result_pos failing...
-			//pts_test_result_parser::debug_message('Failed Additional Check');
-			return false;
-		}
 		pts_test_result_parser::debug_message('Result Key: ' . $key_for_result);
 
 		if(is_file($log_file))
