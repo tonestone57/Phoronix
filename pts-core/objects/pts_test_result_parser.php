@@ -1148,36 +1148,41 @@ class pts_test_result_parser
 			$frame_time_values = explode(',', $output);
 		}
 
-		if(!empty($frame_time_values) && isset($frame_time_values[3]))
+		if(!empty($frame_time_values) && count($frame_time_values) > 3)
 		{
 			// Get rid of the first value as likely outlier
 			array_shift($frame_time_values);
+
 			foreach($frame_time_values as $f => &$v)
 			{
-				if(!is_numeric($v) || $v == 0)
+				if(!is_numeric($v) || $v <= 0)
 				{
 					unset($frame_time_values[$f]);
 					continue;
 				}
 				$v = 1000 / $v;
 			}
-			switch($prefix)
-			{
-				case 'MIN_':
-					$val = min($frame_time_values);
-					break;
-				case 'MAX_':
-					$val = max($frame_time_values);
-					break;
-				case 'AVG_':
-					default:
-					$val = pts_math::arithmetic_mean($frame_time_values);
-					break;
-			}
 
-			if($val != 0)
+			if(!empty($frame_time_values))
 			{
-				$test_results[] = $val;
+				switch($prefix)
+				{
+					case 'MIN_':
+						$val = min($frame_time_values);
+						break;
+					case 'MAX_':
+						$val = max($frame_time_values);
+						break;
+					case 'AVG_':
+					default:
+						$val = pts_math::harmonic_mean($frame_time_values);
+						break;
+				}
+
+				if($val != 0)
+				{
+					$test_results[] = $val;
+				}
 			}
 		}
 

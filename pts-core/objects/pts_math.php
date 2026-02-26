@@ -39,6 +39,7 @@ class pts_math
 	}
 	public static function three_sigma_limits($values, $p = 2)
 	{
+		self::clean_numeric_array($values);
 		$avg = pts_math::arithmetic_mean($values);
 		$variance = pts_math::variance($values, $avg);
 		$std_dev = sqrt($variance);
@@ -46,9 +47,22 @@ class pts_math
 
 		return array(round($avg - $std_dev_3x, $p), round($avg + $std_dev_3x, $p));
 	}
-	public static function variance($values, $avg)
+	public static function variance($values, $avg = null)
 	{
-		return array_sum(array_map(function($v) use ($avg) { return pow($v - $avg, 2); }, $values)) / count($values);
+		self::clean_numeric_array($values);
+		$count = count($values);
+
+		if($count < 2)
+		{
+			return 0;
+		}
+
+		if($avg === null)
+		{
+			$avg = self::arithmetic_mean($values);
+		}
+
+		return array_sum(array_map(function($v) use ($avg) { return pow($v - $avg, 2); }, $values)) / ($count - 1);
 	}
 	public static function arithmetic_mean($values)
 	{
@@ -68,17 +82,17 @@ class pts_math
 			return 0;
 		}
 
+		if(in_array(0, $values))
+		{
+			return 0;
+		}
+
 		$sum_log = 0;
 
 		foreach($values as $v)
 		{
-			if($v <= 0)
+			if($v < 0)
 			{
-				if($v == 0)
-				{
-					return 0;
-				}
-
 				return NAN;
 			}
 
@@ -93,6 +107,10 @@ class pts_math
 		$sum = 0;
 		foreach($values as $v)
 		{
+			if($v == 0)
+			{
+				return 0;
+			}
 			$sum += 1 / $v;
 		}
 		return (1 / $sum) * count($values);
@@ -140,24 +158,7 @@ class pts_math
 	}
 	public static function standard_deviation($values)
 	{
-		self::clean_numeric_array($values);
-		$count = count($values);
-
-		if($count < 2)
-		{
-			return 0;
-		}
-
-		$total = array_sum($values);
-		$mean = $total / $count;
-		$standard_sum = 0;
-
-		foreach($values as $value)
-		{
-			$standard_sum += pow(($value - $mean), 2);
-		}
-
-		return sqrt($standard_sum / ($count - 1));
+		return sqrt(self::variance($values));
 	}
 	public static function percent_standard_deviation($values)
 	{
@@ -246,9 +247,9 @@ class pts_math
 		{
 			return $values[$index];
 		}
-		else if(is_numeric($values[($index - 1)]) && is_numeric($values[($index + 1)]))
+		else if(is_numeric($values[($index - 1)]) && is_numeric($values[$index]))
 		{
-			return ($values[($index - 1)] + $values[($index + 1)]) / 2;
+			return ($values[($index - 1)] + $values[$index]) / 2;
 		}
 	}
 	public static function number_with_unit_to_mb($value)

@@ -153,9 +153,9 @@ class pts_strings
 	public static function parse_for_home_directory($path)
 	{
 		// Find home directory if needed
-		if(strpos($path, '~/') !== false)
+		if(substr($path, 0, 2) == '~/')
 		{
-			$path = str_replace('~/', pts_core::user_home_directory(), $path);
+			$path = substr_replace($path, pts_core::user_home_directory(), 0, 2);
 		}
 
 		return pts_strings::add_trailing_slash($path);
@@ -356,17 +356,7 @@ class pts_strings
 	public static function trim_spaces($str)
 	{
 		// get rid of multiple/redundant spaces that are next to each other
-		$new_str = null;
-		for($i = strlen($str); $i > 0; $i--)
-		{
-			// 32 is a ASCII space
-			if(ord($str[($i - 1)]) != 32 || ($i < 2 || ord($str[($i - 2)]) != 32))
-			{
-				$new_str = $str[$i - 1] . $new_str;
-			}
-		}
-
-		return $new_str != null ? trim($new_str) : '';
+		return $str != null ? trim(preg_replace('/\s+/', ' ', $str)) : '';
 	}
 	public static function remove_redundant($string, $redundant_char)
 	{
@@ -609,7 +599,7 @@ class pts_strings
 		}
 
 		$time_in_seconds = (int)$time_in_seconds;
-		if($round_to > 0)
+		if($round_to > 0 && ($time_in_seconds % $round_to) != 0)
 		{
 			$time_in_seconds += $round_to - ($time_in_seconds % $round_to);
 		}
