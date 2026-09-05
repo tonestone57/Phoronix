@@ -205,7 +205,11 @@ class pts_test_result_buffer
 	{
 		if(isset($this->buffer_by_identifier[$identifier]) && isset($this->buffer_items[$this->buffer_by_identifier[$identifier]]))
 		{
-			return $this->buffer_items[$this->buffer_by_identifier[$identifier]];
+			$item = $this->buffer_items[$this->buffer_by_identifier[$identifier]];
+			if($item->get_result_identifier() === $identifier)
+			{
+				return $item;
+			}
 		}
 
 		foreach($this->buffer_items as $buf)
