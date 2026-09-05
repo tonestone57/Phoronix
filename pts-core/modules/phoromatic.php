@@ -98,12 +98,12 @@ class phoromatic extends pts_module_interface
 			while(hash('sha256', 'PTS' . $check_root_pw) != $root_admin_pw);
 		}
 
-		echo PHP_EOL . 'The new root-admin password must be at least six characters long.' . PHP_EOL;
+		echo PHP_EOL . 'The new root-admin password must be at least eight characters long.' . PHP_EOL;
 		do
 		{
 			$new_root_pw = pts_user_io::prompt_user_input('Please enter the new root-admin password');
 		}
-		while(strlen($new_root_pw) < 6);
+		while(strlen($new_root_pw) < 8);
 
 		$new_root_pw = hash('sha256', 'PTS' . $new_root_pw);
 		$root_admin_pw = phoromatic_server::save_setting('root_admin_pw', $new_root_pw);

@@ -87,6 +87,29 @@ class debug_phoromatic_security_test implements pts_option_interface
 			}
 		}
 
+		// Password policy length verification test using create_new_phoromatic_account
+		$invalid_passwords = array('123', '123456', '1234567');
+
+		foreach($invalid_passwords as $password)
+		{
+			ob_start();
+			$res = create_new_phoromatic_account('testuser_' . rand(1000, 9999), $password, $password, 'test@example.com');
+			$output = ob_get_clean();
+
+			echo "Testing create_new_phoromatic_account password validation for '$password' ... ";
+
+			if($res === false && strpos($output, 'eight characters long') !== false)
+			{
+				echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
+				$passed++;
+			}
+			else
+			{
+				echo pts_client::cli_colored_text("FAILED", "red") . PHP_EOL;
+				$failed++;
+			}
+		}
+
 		echo PHP_EOL . "Tests passed: $passed" . PHP_EOL;
 		echo "Tests failed: $failed" . PHP_EOL;
 
