@@ -49,11 +49,6 @@ class pts_validation
 			}
 		}
 
-		if(count($errors) > 0 && PTS_IS_CLIENT)
-		{
-			// DEBUG
-			print_r($errors);
-		}
 
 		libxml_clear_errors();
 	}
