@@ -921,10 +921,24 @@ class phoromatic_server
 			// Make sure this test schedule is supposed to work on given system
 			if(!in_array($system_id, explode(',', $row['RunTargetSystems'])))
 			{
+				if($sys_row === null)
+				{
+					$stmt = phoromatic_server::$db->prepare('SELECT Groups FROM phoromatic_systems WHERE AccountID = :account_id AND SystemID = :system_id LIMIT 1');
+					$stmt->bindValue(':account_id', $account_id);
+					$stmt->bindValue(':system_id', $system_id);
+					$sys_result = $stmt->execute();
+					$sys_row = $sys_result ? $sys_result->fetchArray() : null;
+				}
+
+				if($sys_row === false || $sys_row === null)
+				{
+					continue;
+				}
+
 				$matches_to_group = false;
 				foreach(explode(',', $row['RunTargetGroups']) as $group)
 				{
-					if(stripos($sys_row['Groups'], '#' . $group . '#') !== false)
+					if(isset($sys_row['Groups']) && stripos($sys_row['Groups'], '#' . $group . '#') !== false)
 					{
 						$matches_to_group = true;
 						break;
@@ -979,7 +993,7 @@ class phoromatic_server
 
 		return false;
 	}
-	public static function system_check_for_open_benchmark_ticket($account_id, $system_id, &$sys_row)
+	public static function system_check_for_open_benchmark_ticket($account_id, $system_id, &$sys_row = null)
 	{
 		$stmt = phoromatic_server::$db->prepare('SELECT * FROM phoromatic_benchmark_tickets WHERE AccountID = :account_id AND State = 1 AND TicketIssueTime < :current_time AND TicketIssueTime > :yesterday ORDER BY TicketIssueTime ASC');
 		//echo phoromatic_server::$db->lastErrorMsg();
@@ -993,10 +1007,24 @@ class phoromatic_server
 			// Make sure this test schedule is supposed to work on given system
 			if(!in_array($system_id, explode(',', $row['RunTargetSystems'])))
 			{
+				if($sys_row === null)
+				{
+					$stmt = phoromatic_server::$db->prepare('SELECT Groups FROM phoromatic_systems WHERE AccountID = :account_id AND SystemID = :system_id LIMIT 1');
+					$stmt->bindValue(':account_id', $account_id);
+					$stmt->bindValue(':system_id', $system_id);
+					$sys_result = $stmt->execute();
+					$sys_row = $sys_result ? $sys_result->fetchArray() : null;
+				}
+
+				if($sys_row === false || $sys_row === null)
+				{
+					continue;
+				}
+
 				$matches_to_group = false;
 				foreach(explode(',', $row['RunTargetGroups']) as $group)
 				{
-					if(stripos($sys_row['Groups'], '#' . $group . '#') !== false)
+					if(isset($sys_row['Groups']) && stripos($sys_row['Groups'], '#' . $group . '#') !== false)
 					{
 						$matches_to_group = true;
 						break;
