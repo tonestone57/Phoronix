@@ -42,12 +42,6 @@ class phoromatic_welcome implements pts_webui_interface
 		if($account_creation_enabled && isset($_POST['register_username']) && isset($_POST['register_password']) && isset($_POST['register_password_confirm']) && isset($_POST['register_email']))
 		{
 			phoromatic_quit_if_invalid_input_found(array('register_username', 'register_email'));
-			$register_password = $_POST['register_password'];
-			if(strlen($register_password) < 8)
-			{
-				phoromatic_error_page('Oops!', 'Please go back and ensure the supplied password is at least eight characters long.');
-				return false;
-			}
 			$new_account = create_new_phoromatic_account($_POST['register_username'], $_POST['register_password'], $_POST['register_password_confirm'], $_POST['register_email'], (isset($_POST['seed_accountid']) ? $_POST['seed_accountid'] : null));
 
 			if($new_account)
