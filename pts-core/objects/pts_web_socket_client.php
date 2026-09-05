@@ -179,20 +179,6 @@ class pts_web_socket_client
 		usleep(100000); // XXX without this, doing lots of send() at once tends to result in only the first one getting through
 		return $t;
 	}
-	public function send_json_data_by_user_id($user_id, $msg)
-	{
-		// XXX: dead code, this function likely not used at all...
-		/*
-		foreach($this->users as &$u)
-		{
-			if($u->id == $user_id)
-			{
-				$this->send_json_data($u->socket, $msg);
-				break;
-			}
-		}
-		*/
-	}
 	private function connect($socket)
 	{
 		$user = new pts_web_socket_user();
