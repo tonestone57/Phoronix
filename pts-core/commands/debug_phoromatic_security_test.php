@@ -87,6 +87,30 @@ class debug_phoromatic_security_test implements pts_option_interface
 			}
 		}
 
+		// Check HTML escaping for log display
+		$log_test_cases = array(
+			'<script>alert("xss")</script>' => '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
+			'</textarea><script>alert(1)</script>' => '&lt;/textarea&gt;&lt;script&gt;alert(1)&lt;/script&gt;',
+			'Log entry with & "' => 'Log entry with &amp; &quot;',
+		);
+
+		foreach($log_test_cases as $input => $expected)
+		{
+			$escaped = htmlspecialchars($input);
+			echo "Testing htmlspecialchars('$input') -> '$escaped' ... ";
+
+			if($escaped === $expected)
+			{
+				echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
+				$passed++;
+			}
+			else
+			{
+				echo pts_client::cli_colored_text("FAILED", "red") . " (Expected '$expected', got '$escaped')" . PHP_EOL;
+				$failed++;
+			}
+		}
+
 		echo PHP_EOL . "Tests passed: $passed" . PHP_EOL;
 		echo "Tests failed: $failed" . PHP_EOL;
 
