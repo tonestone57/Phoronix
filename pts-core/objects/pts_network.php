@@ -120,9 +120,6 @@ class pts_network
 			$return_state = pts_network::stream_download($download, $to);
 		}
 
-		//echo '\nPHP CURL must either be installed or you must adjust your PHP settings file to support opening FTP/HTTP streams.\n';
-		//return false;
-
 		if($return_state == true)
 		{
 			pts_client::$display->test_install_progress_completed();
