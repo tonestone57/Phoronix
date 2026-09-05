@@ -843,10 +843,10 @@ class phoromatic_server
 			{
 				if($sys_groups === null)
 				{
-					$stmt = phoromatic_server::$db->prepare('SELECT Groups FROM phoromatic_systems WHERE AccountID = :account_id AND SystemID = :system_id LIMIT 1');
-					$stmt->bindValue(':account_id', $account_id);
-					$stmt->bindValue(':system_id', $system_id);
-					$sys_result = $stmt->execute();
+					$sys_stmt = phoromatic_server::$db->prepare('SELECT Groups FROM phoromatic_systems WHERE AccountID = :account_id AND SystemID = :system_id LIMIT 1');
+					$sys_stmt->bindValue(':account_id', $account_id);
+					$sys_stmt->bindValue(':system_id', $system_id);
+					$sys_result = $sys_stmt->execute();
 					$sys_row = $sys_result ? $sys_result->fetchArray() : null;
 					$sys_groups = (isset($sys_row['Groups']) && !empty($sys_row['Groups'])) ? $sys_row['Groups'] : false;
 				}
