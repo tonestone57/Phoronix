@@ -41,7 +41,7 @@ class pts_ResultFileSystemsTable extends pts_Table
 		pts_result_file_analyzer::system_components_to_table($table_data, $columns, $rows, $hw);
 		pts_result_file_analyzer::system_components_to_table($table_data, $columns, $rows, $sw);
 
-		pts_result_file_analyzer::compact_result_table_data($table_data, $columns, true); // TODO: see if this true value works fine but if rendering starts messing up, disable it
+		pts_result_file_analyzer::compact_result_table_data($table_data, $columns, true);
 
 		if(defined('OPENBENCHMARKING_IDS'))
 		{
