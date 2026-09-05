@@ -87,6 +87,36 @@ class debug_phoromatic_security_test implements pts_option_interface
 			}
 		}
 
+		// Check IP validation for ping test input
+		$ip_test_cases = array(
+			'127.0.0.1' => true,
+			'192.168.1.1' => true,
+			'::1' => true,
+			'2001:db8::1' => true,
+			'127.0.0.1; rm -rf /' => false,
+			'127.0.0.1|id' => false,
+			'$(reboot)' => false,
+			'invalid_ip' => false,
+			'127.0.0.256' => false,
+		);
+
+		foreach($ip_test_cases as $ip_input => $is_valid_expected)
+		{
+			$is_valid_actual = filter_var($ip_input, FILTER_VALIDATE_IP) !== false;
+			echo "Testing FILTER_VALIDATE_IP('$ip_input') ... ";
+
+			if($is_valid_actual === $is_valid_expected)
+			{
+				echo pts_client::cli_colored_text("PASSED", "green") . PHP_EOL;
+				$passed++;
+			}
+			else
+			{
+				echo pts_client::cli_colored_text("FAILED", "red") . PHP_EOL;
+				$failed++;
+			}
+		}
+
 		echo PHP_EOL . "Tests passed: $passed" . PHP_EOL;
 		echo "Tests failed: $failed" . PHP_EOL;
 
