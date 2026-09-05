@@ -87,6 +87,44 @@ class pts_math
 
 		return exp($sum_log / $count);
 	}
+	public static function pearson_correlation($x, $y)
+	{
+		if(!is_array($x) || !is_array($y))
+		{
+			return 0;
+		}
+
+		$x = array_values($x);
+		$y = array_values($y);
+		$count = count($x);
+
+		if($count == 0 || $count != count($y))
+		{
+			return 0;
+		}
+
+		$sum_x = array_sum($x);
+		$sum_y = array_sum($y);
+		$sum_x_sq = 0;
+		$sum_y_sq = 0;
+		$sum_xy = 0;
+
+		for($i = 0; $i < $count; $i++)
+		{
+			$sum_x_sq += pow($x[$i], 2);
+			$sum_y_sq += pow($y[$i], 2);
+			$sum_xy += $x[$i] * $y[$i];
+		}
+
+		$num = $sum_xy - ($sum_x * $sum_y / $count);
+		$den = sqrt(($sum_x_sq - pow($sum_x, 2) / $count) * ($sum_y_sq - pow($sum_y, 2) / $count));
+
+		return $den == 0 ? 0 : $num / $den;
+	}
+	public static function pearson_coefficient($x, $y)
+	{
+		return self::pearson_correlation($x, $y);
+	}
 	public static function harmonic_mean($values)
 	{
 		// useful for rates / all same result types

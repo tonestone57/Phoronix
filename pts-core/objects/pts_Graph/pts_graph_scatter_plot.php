@@ -98,9 +98,13 @@ class pts_graph_scatter_plot extends pts_graph_core
 			$sum_x_sq = 0;
 			$sum_y_sq = 0;
 			$sum_xy = 0;
+			$x_points = array();
+			$y_points = array();
 
 			foreach($points as $point_set)
 			{
+				$x_points[] = $point_set[0];
+				$y_points[] = $point_set[1];
 				$sum_x += $point_set[0];
 				$sum_y += $point_set[1];
 				$sum_x_sq += pow($point_set[0], 2);
@@ -119,16 +123,12 @@ class pts_graph_scatter_plot extends pts_graph_core
 			$m = ($sum_x_sq - $mean_x * $sum_x) == 0 ? 0 : ($sum_xy - $mean_y * $sum_x) / $denominator;
 			$b = $mean_y - $mean_x * $m;
 
-			$pearson_num = $sum_xy - ($sum_x * $sum_y / $point_count);
-			$pearson_den = sqrt(($sum_x_sq - pow($sum_x, 2) / $point_count) * ($sum_y_sq - pow($sum_y, 2) / $point_count));
-			$pearson_coefficient = $pearson_den == 0 ? 0 : $pearson_num / $pearson_den;
-
+			$pearson_coefficient = pts_math::pearson_correlation($x_points, $y_points);
 
 			$start_y = ($m * $this->i['left_start']) + $b;
 			$end_y = ($m * $this->i['graph_left_end']) + $b;
 
-			// TODO: hook into pearson_coefficient for figuring out if the line is good or not, for now if it goes out of bounds assume bad
-			if($start_y > $this->i['graph_top_end'] || $start_y < $this->i['top_start'] || $end_y > $this->i['graph_top_end'] || $end_y < $this->i['top_start'])
+			if(abs($pearson_coefficient) < 0.3 || $start_y > $this->i['graph_top_end'] || $start_y < $this->i['top_start'] || $end_y > $this->i['graph_top_end'] || $end_y < $this->i['top_start'])
 			{
 				continue;
 			}

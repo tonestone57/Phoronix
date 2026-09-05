@@ -73,6 +73,13 @@ class debug_pts_math_test implements pts_option_interface
 				array('values' => array(true, true), 'expected' => 1),
 				array('values' => array(false, true), 'expected' => 0),
 			),
+			'pearson_correlation' => array(
+				array('args' => array(array(1, 2, 3, 4, 5), array(2, 4, 6, 8, 10)), 'expected' => 1),
+				array('args' => array(array(1, 2, 3, 4, 5), array(10, 8, 6, 4, 2)), 'expected' => -1),
+				array('args' => array(array(1, 2, 3), array(4, 4, 4)), 'expected' => 0),
+				array('args' => array(array(1, 2), array(3)), 'expected' => 0),
+				array('args' => array(null, array(1, 2)), 'expected' => 0),
+			),
 		);
 
 		$passed = 0;
@@ -82,24 +89,32 @@ class debug_pts_math_test implements pts_option_interface
 		{
 			foreach($test_cases as $case)
 			{
-				$values = $case['values'];
 				$expected = $case['expected'];
 
-				if(is_array($values))
+				if(isset($case['args']))
 				{
-					$values_str = implode(', ', array_slice($values, 0, 10));
-					if(count($values) > 10)
-					{
-						$values_str .= ', ... (' . count($values) . ' items)';
-					}
-					echo "Testing $func([" . $values_str . "]) ... ";
+					echo "Testing $func(" . var_export($case['args'], true) . ") ... ";
+					$result = call_user_func_array(array('pts_math', $func), $case['args']);
 				}
 				else
 				{
-					echo "Testing $func(" . var_export($values, true) . ") ... ";
-				}
+					$values = $case['values'];
+					if(is_array($values))
+					{
+						$values_str = implode(', ', array_slice($values, 0, 10));
+						if(count($values) > 10)
+						{
+							$values_str .= ', ... (' . count($values) . ' items)';
+						}
+						echo "Testing $func([" . $values_str . "]) ... ";
+					}
+					else
+					{
+						echo "Testing $func(" . var_export($values, true) . ") ... ";
+					}
 
-				$result = pts_math::$func($values);
+					$result = pts_math::$func($values);
+				}
 
 				$is_pass = false;
 
