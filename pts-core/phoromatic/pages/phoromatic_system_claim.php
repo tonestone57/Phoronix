@@ -80,12 +80,12 @@ class phoromatic_system_claim implements pts_webui_interface
 			}
 			if((isset($_POST['ip_claim']) && !empty($_POST['ip_claim'])) && isset($_POST['ping']) && verify_submission_token())
 			{
-				$ip_ping = ip2long($_POST['ip_claim']) !== false ? $_POST['ip_claim'] : null;
+				$ip_ping = filter_var($_POST['ip_claim'], FILTER_VALIDATE_IP) !== false ? $_POST['ip_claim'] : null;
 				if($ip_ping)
 				{
-					echo '<h3>Ping Test: ' . $ip_ping . '</h3>';
+					echo '<h3>Ping Test: ' . htmlspecialchars($ip_ping) . '</h3>';
 					echo '<pre>';
-					echo shell_exec('ping -c 1 ' . $ip_ping);
+					echo htmlspecialchars(shell_exec('ping -c 1 ' . escapeshellarg($ip_ping)));
 					echo '</pre>';
 				}
 			}
