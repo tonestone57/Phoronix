@@ -169,9 +169,7 @@ class pts_render
 				$extra_attributes['compact_to_scalar'] = true;
 			}
 
-			// XXX: removed || $result_file->is_results_tracker() from below and should be added
-			// Removing the command fixes cases like: 1210053-BY-MYRESULTS43
-			if(isset($extra_attributes['compact_to_scalar']) || isset($extra_attributes['compact_scatter']) || $result_file->is_multi_way_comparison($result_identifiers, $extra_attributes))
+			if(isset($extra_attributes['compact_to_scalar']) || isset($extra_attributes['compact_scatter']) || $result_file->is_multi_way_comparison($result_identifiers, $extra_attributes) || $result_file->is_results_tracker())
 			{
 				if((isset($extra_attributes['compact_to_scalar']) || (false && $result_file->is_multi_way_comparison($result_identifiers, $extra_attributes))) && in_array($result_object->test_profile->get_display_format(), array('LINE_GRAPH', 'FILLED_LINE_GRAPH')) && pts_graph_core::get_graph_config('style', 'allow_box_plots'))
 				{
