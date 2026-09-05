@@ -85,7 +85,7 @@ class phoromatic_system_claim implements pts_webui_interface
 				{
 					echo '<h3>Ping Test: ' . $ip_ping . '</h3>';
 					echo '<pre>';
-					echo shell_exec('ping -c 1 ' . $ip_ping);
+					echo shell_exec('ping -c 1 ' . escapeshellarg($ip_ping));
 					echo '</pre>';
 				}
 			}
