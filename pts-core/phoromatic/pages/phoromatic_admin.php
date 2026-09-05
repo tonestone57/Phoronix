@@ -209,18 +209,23 @@ class phoromatic_admin implements pts_webui_interface
 						</p>';
 
 		//
-		$server_log = explode(PHP_EOL, file_get_contents(getenv('PTS_PHOROMATIC_LOG_LOCATION')));
-		foreach($server_log as $i => $line_item)
+		$log_location = getenv('PTS_PHOROMATIC_LOG_LOCATION');
+		$server_log = '';
+		if(!empty($log_location) && is_file($log_location))
 		{
-			if(strpos($line_item, '[200]') !== false || strpos($line_item, '[302]') !== false)
+			$log_lines = explode(PHP_EOL, file_get_contents($log_location));
+			foreach($log_lines as $i => $line_item)
 			{
-				unset($server_log[$i]);
+				if(strpos($line_item, '[200]') !== false || strpos($line_item, '[302]') !== false)
+				{
+					unset($log_lines[$i]);
+				}
 			}
+			$server_log = implode(PHP_EOL, $log_lines);
 		}
-		$server_log = implode(PHP_EOL, $server_log);
 
 		$main .= '<hr /><h2>Phoromatic Server Log</h2>';
-		$main .= '<p><textarea style="width: 80%; height: 400px;">' . $server_log  . '</textarea></p>';
+		$main .= '<p><textarea style="width: 80%; height: 400px;">' . htmlspecialchars($server_log)  . '</textarea></p>';
 
 		$main .= '<hr /><h2>Email All Users</h2>';
 		$main .= '<form name="email_all" id="email_all" action="?admin" method="post">
