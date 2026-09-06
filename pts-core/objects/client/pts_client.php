@@ -108,6 +108,16 @@ class pts_client
 
 		return $options;
 	}
+	public static function cleanup_expired_run_locks()
+	{
+		foreach(pts_file_io::glob(PTS_USER_PATH . 'run-lock-*') as $possible_run_lock)
+		{
+			if(!self::is_locked($possible_run_lock))
+			{
+				pts_file_io::unlink($possible_run_lock);
+			}
+		}
+	}
 	public static function is_locked($lock_file)
 	{
 		$fp = fopen($lock_file, 'w');
