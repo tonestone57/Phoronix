@@ -26,6 +26,12 @@ class sys_voltage extends phodevi_sensor
 	const SENSOR_SENSES = 'voltage';
 	const SENSOR_UNIT = 'Volts';
 	
+	private static $voltage_sensor_map = array(
+		'12v' => array('V12', '+12V'),
+		'5v' => array('V5', '+5V'),
+		'3v' => array('V3.3', '+3.3V')
+	);
+
 	private $voltage_to_monitor = NULL;
 	
 	function __construct($instance, $parameter)
@@ -74,19 +80,12 @@ class sys_voltage extends phodevi_sensor
 		{
 			$supported = array();
 			
-			//TODO not so elegant
-			
-			if(phodevi_linux_parser::read_sensors(array('V12', '+12V')) )
+			foreach(self::$voltage_sensor_map as $device => $sensor_names)
 			{
-				array_push($supported, '12v');				
-			}
-			if(phodevi_linux_parser::read_sensors(array('V5', '+5V') ) )
-			{
-				array_push($supported, '5v');				
-			}
-			if(phodevi_linux_parser::read_sensors(array('V3.3', '+3.3V') ) )
-			{
-				array_push($supported, '3v');				
+				if(phodevi_linux_parser::read_sensors($sensor_names))
+				{
+					array_push($supported, $device);
+				}
 			}
 			
 			return $supported;
@@ -103,17 +102,9 @@ class sys_voltage extends phodevi_sensor
 		}
 		if(phodevi::is_linux())
 		{
-			if($this->voltage_to_monitor == '12v')
+			if(isset(self::$voltage_sensor_map[$this->voltage_to_monitor]))
 			{
-				$sensor = phodevi_linux_parser::read_sensors(array('V12', '+12V'));
-			}
-			elseif($this->voltage_to_monitor == '5v')
-			{
-				$sensor = phodevi_linux_parser::read_sensors(array('V5', '+5V'));
-			}
-			elseif($this->voltage_to_monitor == '3v')
-			{
-				$sensor = phodevi_linux_parser::read_sensors(array('V3.3', '+3.3V'));
+				$sensor = phodevi_linux_parser::read_sensors(self::$voltage_sensor_map[$this->voltage_to_monitor]);
 			}
 		}
 		
