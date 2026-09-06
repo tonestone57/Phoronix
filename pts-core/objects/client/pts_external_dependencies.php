@@ -32,7 +32,8 @@ class pts_external_dependencies
 		if($file != null && is_file(pts_exdep_generic_parser::get_external_dependency_path() . 'dependency-handlers/' . $pkg_vendor . '_dependency_handler.php'))
 		{
 			require_once(pts_exdep_generic_parser::get_external_dependency_path() . 'dependency-handlers/' . $pkg_vendor . '_dependency_handler.php');
-			eval("\$provides = {$pkg_vendor}_dependency_handler::what_provides(\$file);");
+			$dh_class = $pkg_vendor . '_dependency_handler';
+			$provides = $dh_class::what_provides($file);
 		}
 
 		if(empty($provides))
@@ -54,10 +55,9 @@ class pts_external_dependencies
 		$pkg_vendor = self::vendor_identifier('package-list');
 		if(is_file(pts_exdep_generic_parser::get_external_dependency_path() . 'dependency-handlers/' . $pkg_vendor . '_dependency_handler.php'))
 		{
-			$startup = null;
 			require_once(pts_exdep_generic_parser::get_external_dependency_path() . 'dependency-handlers/' . $pkg_vendor . '_dependency_handler.php');
-			eval("\$startup = {$pkg_vendor}_dependency_handler::startup_handler();");
-			return $startup;
+			$dh_class = $pkg_vendor . '_dependency_handler';
+			return $dh_class::startup_handler();
 		}
 		return false;
 	}
@@ -575,10 +575,9 @@ class pts_external_dependencies
 		}
 		else if(is_file(pts_exdep_generic_parser::get_external_dependency_path() . 'dependency-handlers/' . $pkg_vendor . '_dependency_handler.php'))
 		{
-			$installed = null;
 			require_once(pts_exdep_generic_parser::get_external_dependency_path() . 'dependency-handlers/' . $pkg_vendor . '_dependency_handler.php');
-			eval("\$installed = {$pkg_vendor}_dependency_handler::install_dependencies(\$os_packages_to_install);");
-			return $installed;
+			$dh_class = $pkg_vendor . '_dependency_handler';
+			return $dh_class::install_dependencies($os_packages_to_install);
 		}
 		else
 		{
