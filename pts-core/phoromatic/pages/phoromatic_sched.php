@@ -189,8 +189,8 @@ class phoromatic_sched implements pts_webui_interface
 
 		if(!$is_new)
 		{
-			$e_schedule['RunTargetSystems'] = explode(',', $e_schedule['RunTargetSystems']);
-			$e_schedule['RunTargetGroups'] = explode(',', $e_schedule['RunTargetGroups']);
+			$e_schedule['RunTargetSystems'] = array_flip(explode(',', $e_schedule['RunTargetSystems']));
+			$e_schedule['RunTargetGroups'] = array_flip(explode(',', $e_schedule['RunTargetGroups']));
 		}
 
 		if($row = $result->fetchArray())
@@ -198,7 +198,7 @@ class phoromatic_sched implements pts_webui_interface
 			$main .= '<h4>Systems: ';
 			do
 			{
-				$main .= '<input type="checkbox" name="run_on_systems[]" value="' . $row['SystemID'] . '" ' . (!$is_new && in_array($row['SystemID'], $e_schedule['RunTargetSystems']) ? 'checked="checked" ' : null) . '/> ' . $row['Title'] . ' ';
+				$main .= '<input type="checkbox" name="run_on_systems[]" value="' . $row['SystemID'] . '" ' . (!$is_new && isset($e_schedule['RunTargetSystems'][$row['SystemID']]) ? 'checked="checked" ' : null) . '/> ' . $row['Title'] . ' ';
 			}
 			while($row = $result->fetchArray());
 			$main .= '</h4>';
@@ -213,7 +213,7 @@ class phoromatic_sched implements pts_webui_interface
 			$main .= '<h4>Groups: ';
 			do
 			{
-				$main .= '<input type="checkbox" name="run_on_groups[]" value="' . $row['GroupName'] . '" ' . (!$is_new && in_array($row['GroupName'], $e_schedule['RunTargetGroups']) ? 'checked="checked" ' : null) . '/> ' . $row['GroupName'] . ' ';
+				$main .= '<input type="checkbox" name="run_on_groups[]" value="' . $row['GroupName'] . '" ' . (!$is_new && isset($e_schedule['RunTargetGroups'][$row['GroupName']]) ? 'checked="checked" ' : null) . '/> ' . $row['GroupName'] . ' ';
 			}
 			while($row = $result->fetchArray());
 			$main .= '</h4>';
