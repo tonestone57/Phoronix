@@ -132,7 +132,11 @@ class phoromatic_welcome implements pts_webui_interface
 					$_SESSION['CreatedOn'] = $created_on;
 					$_SESSION['Token'] = sha1($account_salt . (function_exists('random_bytes') ? bin2hex(random_bytes(32)) : rand()) . PTS_CORE_VERSION . time());
 					$_SESSION['CoreVersionOnSignOn'] = PTS_CORE_VERSION;
-					$account_salt = phoromatic_server::$db->exec('UPDATE phoromatic_users SET LastIP = \'' . $_SERVER['REMOTE_ADDR'] . '\', LastLogin = \'' . phoromatic_server::current_time() . '\' WHERE UserName = "' . $matching_user['UserName'] . '"');
+					$stmt = phoromatic_server::$db->prepare('UPDATE phoromatic_users SET LastIP = :last_ip, LastLogin = :last_login WHERE UserName = :user_name');
+					$stmt->bindValue(':last_ip', $_SERVER['REMOTE_ADDR']);
+					$stmt->bindValue(':last_login', phoromatic_server::current_time());
+					$stmt->bindValue(':user_name', $matching_user['UserName']);
+					$stmt->execute();
 					session_write_close();
 
 					pts_file_io::mkdir(phoromatic_server::phoromatic_account_path($account_id));
