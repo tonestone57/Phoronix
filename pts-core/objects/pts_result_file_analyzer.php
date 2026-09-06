@@ -1425,7 +1425,7 @@ class pts_result_file_analyzer
 			$flagged_results = array_slice(array_keys($flagged_results), -6);
 			$flag_delta_objects = $result_file->get_result_objects($flagged_results);
 
-			for($i = 0; $i < count($flagged_results); $i++)
+			for($i = 0, $i_count = count($flagged_results); $i < $i_count; $i++)
 			{
 				$result_objects[$flagged_results[$i]] = $flag_delta_objects[$i];
 				unset($flag_delta_objects[$i]);
