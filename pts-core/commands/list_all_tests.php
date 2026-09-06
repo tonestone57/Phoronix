@@ -38,6 +38,7 @@ class list_all_tests implements pts_option_interface
 			return true;
 		}
 
+		$os_under_test = phodevi::os_under_test();
 		$test_count = 0;
 		$table = array();
 		foreach(pts_openbenchmarking::available_tests(false) as $identifier)
@@ -45,7 +46,7 @@ class list_all_tests implements pts_option_interface
 			$repo = substr($identifier, 0, strpos($identifier, '/'));
 			$id = substr($identifier, strlen($repo) + 1);
 			$repo_index = pts_openbenchmarking::read_repository_index($repo);
-			if((!empty($repo_index['tests'][$id]['supported_platforms']) && !in_array(phodevi::os_under_test(), $repo_index['tests'][$id]['supported_platforms'])) || empty($repo_index['tests'][$id]['title']))
+			if((!empty($repo_index['tests'][$id]['supported_platforms']) && !in_array($os_under_test, $repo_index['tests'][$id]['supported_platforms'])) || empty($repo_index['tests'][$id]['title']))
 			{
 				// Don't show unsupported tests
 				continue;
