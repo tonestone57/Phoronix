@@ -3,8 +3,8 @@
 /*
 	Phoronix Test Suite
 	URLs: http://www.phoronix.com, http://www.phoronix-test-suite.com/
-	Copyright (C) 2008 - 2016, Phoronix Media
-	Copyright (C) 2008 - 2016, Michael Larabel
+	Copyright (C) 2008 - 2026, Phoronix Media
+	Copyright (C) 2008 - 2026, Michael Larabel
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,23 +27,55 @@ class phodevi_sensor_monitor
 
 	public function __construct($to_monitor, $recover_dir = false)
 	{
-		if($recover_dir != false && is_dir($recover_dir) && is_array($to_monitor))
+		if($recover_dir != false && is_dir($recover_dir) && is_array($to_monitor) && isset($to_monitor[0]) && !($to_monitor[0] instanceof phodevi_sensor))
 		{
 			$this->sensors_to_monitor = $to_monitor;
 			$this->sensor_storage_dir = $recover_dir;
+			if(substr($this->sensor_storage_dir, -1) != '/')
+			{
+				$this->sensor_storage_dir .= '/';
+			}
 		}
 		else
 		{
-			$this->sensor_storage_dir = pts_client::create_temporary_directory('sensors');
-
-			$monitor_all = in_array('all', $to_monitor);
-			$this->sensors_to_monitor = array();
-			foreach(phodevi::query_sensors() as $sensor)
+			$this->sensor_storage_dir = is_string($recover_dir) && is_dir($recover_dir) ? $recover_dir : pts_client::create_temporary_directory('sensors');
+			if(substr($this->sensor_storage_dir, -1) != '/')
 			{
-				if($monitor_all || in_array(phodevi::sensor_identifier($sensor), $to_monitor) || in_array('all.' . $sensor[0], $to_monitor))
+				$this->sensor_storage_dir .= '/';
+			}
+
+			$monitor_all = is_array($to_monitor) && in_array('all', $to_monitor);
+			$this->sensors_to_monitor = array();
+
+			if(is_array($to_monitor))
+			{
+				foreach($to_monitor as $sensor)
 				{
-					array_push($this->sensors_to_monitor, $sensor);
-					file_put_contents($this->sensor_storage_dir . phodevi::sensor_identifier($sensor), null);
+					if($sensor instanceof phodevi_sensor)
+					{
+						array_push($this->sensors_to_monitor, $sensor);
+						$id = phodevi::sensor_object_identifier($sensor);
+						if(!is_file($this->sensor_storage_dir . $id))
+						{
+							file_put_contents($this->sensor_storage_dir . $id, null);
+						}
+					}
+				}
+			}
+
+			if(empty($this->sensors_to_monitor))
+			{
+				foreach(phodevi::query_sensors() as $sensor)
+				{
+					if($monitor_all || (is_array($to_monitor) && (in_array(phodevi::sensor_identifier($sensor), $to_monitor) || in_array('all.' . $sensor[0], $to_monitor))))
+					{
+						array_push($this->sensors_to_monitor, $sensor);
+						$id = phodevi::sensor_identifier($sensor);
+						if(!is_file($this->sensor_storage_dir . $id))
+						{
+							file_put_contents($this->sensor_storage_dir . $id, null);
+						}
+					}
 				}
 			}
 		}
@@ -64,7 +96,9 @@ class phodevi_sensor_monitor
 			$match = explode(',', $match);
 			foreach($this->sensors_to_monitor as $sensor)
 			{
-				if(in_array(phodevi::sensor_identifier($sensor), $match) || in_array('all.' . $sensor[0], $match))
+				$id = $sensor instanceof phodevi_sensor ? phodevi::sensor_object_identifier($sensor) : phodevi::sensor_identifier($sensor);
+				$type = $sensor instanceof phodevi_sensor ? $sensor->get_type() : $sensor[0];
+				if(in_array($id, $match) || in_array('all.' . $type, $match))
 				{
 					array_push($share, $sensor);
 				}
@@ -73,10 +107,14 @@ class phodevi_sensor_monitor
 			return $share;
 		}
 	}
-	public function sensor_logging_start()
+	public function sensor_logging_start($interval = 1)
 	{
+		if(is_file($this->sensor_storage_dir . 'STOP'))
+		{
+			unlink($this->sensor_storage_dir . 'STOP');
+		}
 		$this->sensor_logging_update();
-		pts_client::timed_function(array($this, 'sensor_logging_update'), array(), 1, array($this, 'sensor_logging_continue'), array());
+		pts_client::timed_function(array($this, 'sensor_logging_update'), array(), $interval, array($this, 'sensor_logging_continue'), array());
 	}
 	public function sensor_logging_stop()
 	{
@@ -100,16 +138,36 @@ class phodevi_sensor_monitor
 		foreach($this->sensors_to_monitor as $sensor)
 		{
 			$sensor_value = phodevi::read_sensor($sensor);
+			$id = $sensor instanceof phodevi_sensor ? phodevi::sensor_object_identifier($sensor) : phodevi::sensor_identifier($sensor);
 
-			if($sensor_value != -1 && is_file($this->sensor_storage_dir . phodevi::sensor_identifier($sensor)))
+			if($sensor_value != -1 && is_file($this->sensor_storage_dir . $id))
 			{
-				file_put_contents($this->sensor_storage_dir . phodevi::sensor_identifier($sensor), $sensor_value . PHP_EOL,  FILE_APPEND);
+				file_put_contents($this->sensor_storage_dir . $id, $sensor_value . PHP_EOL, FILE_APPEND);
 			}
 		}
 	}
-	private function read_sensor_data($sensor, $offset = 0)
+	public function read_sensor_data($sensor, $offset = 0)
 	{
-		$log_f = file_get_contents($this->sensor_storage_dir . phodevi::sensor_identifier($sensor));
+		if($sensor instanceof phodevi_sensor)
+		{
+			$id = phodevi::sensor_object_identifier($sensor);
+		}
+		else if(is_array($sensor))
+		{
+			$id = phodevi::sensor_identifier($sensor);
+		}
+		else
+		{
+			$id = $sensor;
+		}
+
+		$log_file = $this->sensor_storage_dir . $id;
+		if(!is_file($log_file))
+		{
+			return array();
+		}
+
+		$log_f = file_get_contents($log_file);
 		$lines = explode(PHP_EOL, $log_f);
 
 		if($offset != 0)
@@ -136,7 +194,26 @@ class phodevi_sensor_monitor
 			return false;
 		}
 
-		return array('id' => phodevi::sensor_identifier($sensor), 'name' => phodevi::sensor_name($sensor), 'results' => $results, 'unit' => phodevi::read_sensor_unit($sensor));
+		if($sensor instanceof phodevi_sensor)
+		{
+			$id = phodevi::sensor_object_identifier($sensor);
+			$name = phodevi::sensor_object_name($sensor);
+			$unit = phodevi::read_sensor_object_unit($sensor);
+		}
+		else if(is_array($sensor))
+		{
+			$id = phodevi::sensor_identifier($sensor);
+			$name = phodevi::sensor_name($sensor);
+			$unit = phodevi::read_sensor_unit($sensor);
+		}
+		else
+		{
+			$id = $sensor;
+			$name = $sensor;
+			$unit = '';
+		}
+
+		return array('id' => $id, 'name' => $name, 'results' => $results, 'unit' => $unit);
 	}
 }
 

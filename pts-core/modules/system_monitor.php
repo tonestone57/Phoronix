@@ -3,8 +3,8 @@
 /*
 	Phoronix Test Suite
 	URLs: http://www.phoronix.com, http://www.phoronix-test-suite.com/
-	Copyright (C) 2008 - 2024, Phoronix Media
-	Copyright (C) 2008 - 2024, Michael Larabel
+	Copyright (C) 2008 - 2026, Phoronix Media
+	Copyright (C) 2008 - 2026, Michael Larabel
 	system_monitor.php: System sensor monitoring module for PTS
 
 	This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TODO XXX: Port to new phodevi_sensor_monitor interface
 class system_monitor extends pts_module_interface
 {
 	const module_name = 'System Monitor';
@@ -31,7 +30,7 @@ class system_monitor extends pts_module_interface
 
 	private static $result_identifier = null;
 	private static $to_monitor = array();
-	private static $monitor_pids = array();
+	private static $sensor_monitor = null;
 	private static $monitor_test_count = 0;
 	private static $individual_test_run_request = null;
 	private static $successful_test_run_request = null;
@@ -112,7 +111,6 @@ class system_monitor extends pts_module_interface
 	}
 	protected static function pause_monitoring()
 	{
-		$module_dir = pts_module::save_dir();
 		foreach(self::$to_monitor as $sensor)
 		{
 			pts_module::save_file('logs/' . phodevi::sensor_object_identifier($sensor), 'pause', true);
@@ -120,11 +118,11 @@ class system_monitor extends pts_module_interface
 	}
 	protected static function chop_paused_monitoring_data()
 	{
-		// Unpause (chop of excess) monitoring
+		// Unpause (chop off excess) monitoring
 		foreach(pts_file_io::glob(pts_module::save_dir() . 'logs/*') as $log_file)
 		{
 			$log_contents = file_get_contents($log_file);
-			if(($x = strpos($log_file, 'pause')) !== false)
+			if(($x = strpos($log_contents, 'pause')) !== false)
 			{
 				$log_contents = substr($log_contents, 0, $x);
 				file_put_contents($log_file, $log_contents);
@@ -181,6 +179,12 @@ class system_monitor extends pts_module_interface
 	}
 	public static function __post_run_process()
 	{
+		if(self::$sensor_monitor instanceof phodevi_sensor_monitor)
+		{
+			self::$sensor_monitor->cleanup();
+			self::$sensor_monitor = null;
+		}
+
 		foreach(self::$cgroup_enabled_controllers as $controller)
 		{
 			self::cgroup_remove(self::$cgroup_name, $controller);
@@ -188,90 +192,62 @@ class system_monitor extends pts_module_interface
 	}
 	private static function pts_start_monitoring()
 	{
-		$instant_sensors = array();
-
-		foreach(self::$to_monitor as $sensor)
+		$log_dir = pts_module::save_dir() . 'logs/';
+		if(!is_dir($log_dir))
 		{
-			pts_module::save_file('logs/' . phodevi::sensor_object_identifier($sensor));
-			$is_instant = $sensor->is_instant();
-
-			if($is_instant === false)
-			{
-				$pid = pts_module::pts_timed_function('pts_monitor_update', self::$sensor_monitoring_frequency, array(array($sensor)));
-				self::$monitor_pids[] = $pid;
-			}
-			else
-			{
-				$instant_sensors[] = $sensor;
-			}
+			mkdir($log_dir, 0777, true);
 		}
 
-		if(!empty($instant_sensors))
-		{
-			$pid = pts_module::pts_timed_function('pts_monitor_update', self::$sensor_monitoring_frequency, array($instant_sensors));
-			self::$monitor_pids[] = $pid;
-		}
+		self::$sensor_monitor = new phodevi_sensor_monitor(self::$to_monitor, $log_dir);
+		self::$sensor_monitor->sensor_logging_start(self::$sensor_monitoring_frequency);
 	}
 	private static function pts_stop_monitoring()
 	{
-		foreach(self::$monitor_pids as $pid)
+		if(self::$sensor_monitor instanceof phodevi_sensor_monitor)
 		{
-			if(function_exists('posix_kill') && defined('SIGTERM'))
-			{
-				posix_kill($pid, SIGTERM);
-			}
-			else if(pts_client::executable_in_path('kill'))
-			{
-				shell_exec('kill ' . $pid . ' > /dev/null 2>&1');
-			}
-			else
-			{
-				// TODO XXX
-				continue;
-			}
-
-			if(function_exists('pcntl_waitpid'))
-			{
-				pcntl_waitpid($pid, $status);
-			}
-		}
-		self::$monitor_pids = array();
-	}
-
-	// Reads value of a single sensor, checks its correctness and saves it to the monitor log.
-	public static function pts_monitor_update($sensor_list)
-	{
-		foreach($sensor_list as $sensor)
-		{
-			$sensor_value = phodevi::read_sensor($sensor);
-
-			if($sensor_value != -1) //  && pts_module::is_file('logs/' . phodevi::sensor_object_identifier($sensor))
-			{
-				pts_module::save_file('logs/' . phodevi::sensor_object_identifier($sensor), $sensor_value, true);
-			}
+			self::$sensor_monitor->sensor_logging_stop();
 		}
 	}
 
 	private static function parse_monitor_log($log_file, $start_offset = 0, $end_offset = -1)
 	{
-		$log_f = pts_module::read_file($log_file);
-		$line_breaks = explode(PHP_EOL, $log_f);
-		$results = array();
-
-		for($i = 0; $i < $start_offset && isset($line_breaks[$i]); $i++)
+		if(self::$sensor_monitor instanceof phodevi_sensor_monitor)
 		{
-			unset($line_breaks[$i]);
+			$sensor_id = basename($log_file);
+			$lines = self::$sensor_monitor->read_sensor_data($sensor_id, $start_offset);
+		}
+		else
+		{
+			$log_f = pts_module::read_file($log_file);
+			$lines = explode(PHP_EOL, $log_f);
+
+			if($start_offset > 0)
+			{
+				$lines = array_slice($lines, $start_offset);
+			}
+
+			foreach($lines as $i => $line)
+			{
+				$line = trim($line);
+				if(empty($line) || $line < 0 || !is_numeric($line))
+				{
+					unset($lines[$i]);
+				}
+				else
+				{
+					$lines[$i] = $line;
+				}
+			}
+			$lines = array_values($lines);
 		}
 
-		foreach($line_breaks as $line_number => $line)
+		$results = array();
+		foreach($lines as $line_number => $line)
 		{
 			if($end_offset != -1 && $line_number >= $end_offset)
 			{
 				break;
 			}
-
-			$line = trim($line);
-
 			if(!empty($line) && $line >= 0 && is_numeric($line))
 			{
 				$results[] = $line;
