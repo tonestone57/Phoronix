@@ -139,13 +139,16 @@ abstract class pts_graph_core
 				$split = explode('=', $id);
 				if(count($split) == 2)
 				{
-					$this->i['highlight_values'][$split[0]] = null;
 					$color = $split[1];
-					if(is_numeric($color)) // TODO clean this up with a better color check
+					if(is_numeric($color))
 					{
-						$color = self::$c['color']['paint'][$color];
-						$this->i['highlight_values'][$split[0]] = $color;
+						$color = isset(self::$c['color']['paint'][$color]) ? self::$c['color']['paint'][$color] : null;
 					}
+					else if(!pts_strings::is_color($color))
+					{
+						$color = null;
+					}
+					$this->i['highlight_values'][$split[0]] = $color;
 				}
 				else
 				{

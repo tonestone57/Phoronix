@@ -100,6 +100,17 @@ class debug_pts_strings_test implements pts_option_interface
 				array('input' => 'Abc', 'expected' => false),
 				array('input' => 'abc', 'expected' => false),
 			),
+			'is_color' => array(
+				array('input' => '#0000ff', 'expected' => true),
+				array('input' => '#f00', 'expected' => true),
+				array('input' => 'blue', 'expected' => true),
+				array('input' => 'rgb(255, 0, 0)', 'expected' => true),
+				array('input' => '#xyz', 'expected' => false),
+				array('input' => 'invalid_color!', 'expected' => false),
+				array('input' => '123', 'expected' => false),
+				array('input' => '', 'expected' => false),
+				array('input' => null, 'expected' => false),
+			),
 			'trim_spaces' => array(
 				array('input' => 'Hello World', 'expected' => 'Hello World'),
 				array('input' => 'Hello  World', 'expected' => 'Hello World'),

@@ -72,6 +72,26 @@ class pts_strings
 	{
 		return function_exists('ctype_upper') ? ctype_upper($string) : ($string == strtoupper($string));
 	}
+	public static function is_color($color)
+	{
+		if(empty($color) || !is_string($color))
+		{
+			return false;
+		}
+
+		if(substr($color, 0, 1) == '#')
+		{
+			$len = strlen($color);
+			return ($len == 4 || $len == 7 || $len == 9) && ctype_xdigit(substr($color, 1));
+		}
+
+		if(substr($color, 0, 4) == 'rgb(' || substr($color, 0, 5) == 'rgba(' || substr($color, 0, 4) == 'hsl(' || substr($color, 0, 5) == 'hsla(')
+		{
+			return substr($color, -1) == ')';
+		}
+
+		return pts_strings::is_alpha($color);
+	}
 	public static function trim_search_query_leave_hdd_size($value)
 	{
 		return pts_strings::trim_search_query($value, false, true);
