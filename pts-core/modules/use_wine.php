@@ -115,8 +115,9 @@ class use_wine extends pts_module_interface
 		}
 
 		// Let's go through the intended run file line by line and make intended modifications to what's needed for making Wine happy... As we go, write it to the new temporary file
+		$raw_script = pts_file_io::file_get_contents($run_file);
 		$new_script = '';
-		foreach(explode(PHP_EOL, pts_file_io::file_get_contents($run_file)) as $line)
+		foreach(explode(PHP_EOL, $raw_script) as $line)
 		{
 			if($line == null)
 			{
@@ -129,7 +130,7 @@ class use_wine extends pts_module_interface
 				// if 'wine' is already found in the test profile, assume test is already customized for Wine usage
 
 				// reset $new_script to original script
-				$new_script = pts_file_io::file_get_contents($run_file);
+				$new_script = $raw_script;
 				break;
 			}
 
