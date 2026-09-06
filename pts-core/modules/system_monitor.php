@@ -507,9 +507,9 @@ class system_monitor extends pts_module_interface
 		if(!is_dir($cgroup_path))	// cgroup filesystem doesn't allow to create regular files anyway
 		{
 			$current_user = exec('whoami');
-			$mkdir_cmd = 'mkdir ' . $cgroup_path;
-			$chmod_cmd = 'chown ' . $current_user . ' ' . $cgroup_path . '/tasks';
-			$command = $sudo_cmd . '"' . $mkdir_cmd . ' && ' . $chmod_cmd . '"';
+			$mkdir_cmd = 'mkdir ' . escapeshellarg($cgroup_path);
+			$chmod_cmd = 'chown ' . escapeshellarg($current_user) . ' ' . escapeshellarg($cgroup_path . '/tasks');
+			$command = $sudo_cmd . escapeshellarg($mkdir_cmd . ' && ' . $chmod_cmd);
 			exec($command);
 		}
 
@@ -526,7 +526,7 @@ class system_monitor extends pts_module_interface
 
 		if(is_dir($cgroup_path))	// cgroup filesystem doesn't allow to create regular files anyway
 		{
-			$rmdir_cmd = 'rmdir ' . $cgroup_path;
+			$rmdir_cmd = 'rmdir ' . escapeshellarg($cgroup_path);
 			shell_exec($sudo_cmd . $rmdir_cmd);
 		}
 
