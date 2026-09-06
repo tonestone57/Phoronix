@@ -20,7 +20,6 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//TODO refactor and fix returning of two values
 class gpu_freq extends phodevi_sensor
 {
 	const SENSOR_TYPE = 'gpu';
@@ -30,7 +29,6 @@ class gpu_freq extends phodevi_sensor
 	public function read_sensor()
 	{
 		// Graphics processor real/current frequency
-		$show_memory = false;
 		$core_freq = 0;
 		$mem_freq = 0;
 
@@ -199,11 +197,10 @@ class gpu_freq extends phodevi_sensor
 
 		if($core_freq == 0 && $mem_freq == 0)
 		{
-			$show_memory = false;
 			$core_freq = -1;
 		}
 
-		return $show_memory ? array($core_freq, $mem_freq) : $core_freq;
+		return $core_freq;
 	}
 }
 
