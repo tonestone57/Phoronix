@@ -509,7 +509,7 @@ class system_monitor extends pts_module_interface
 			$current_user = exec('whoami');
 			$mkdir_cmd = 'mkdir ' . escapeshellarg($cgroup_path);
 			$chmod_cmd = 'chown ' . escapeshellarg($current_user) . ' ' . escapeshellarg($cgroup_path . '/tasks');
-			$command = $sudo_cmd . '"' . $mkdir_cmd . ' && ' . $chmod_cmd . '"';
+			$command = $sudo_cmd . escapeshellarg($mkdir_cmd . ' && ' . $chmod_cmd);
 			exec($command);
 		}
 
