@@ -3,8 +3,8 @@
 /*
 	Phoronix Test Suite
 	URLs: http://www.phoronix.com, http://www.phoronix-test-suite.com/
-	Copyright (C) 2008 - 2023, Phoronix Media
-	Copyright (C) 2008 - 2023, Michael Larabel
+	Copyright (C) 2008 - 2026, Phoronix Media
+	Copyright (C) 2008 - 2026, Michael Larabel
 	phodevi_system.php: The PTS Device Interface object for the system software
 
 	This program is free software; you can redistribute it and/or modify
@@ -104,6 +104,10 @@ class phodevi_system extends phodevi_device_interface
 				if($vendor == '0x8086')
 				{
 					$npus[] = 'Intel NPU';
+				}
+				else if($vendor == '0x1022')
+				{
+					$npus[] = 'AMD NPU';
 				}
 			}
 		}
@@ -405,7 +409,7 @@ class phodevi_system extends phodevi_device_interface
 					break;
 			}
 
-			if(strpos($fs, 'UNKNOWN') !== false && isset(phodevi::$vfs->mounts))
+			if(!empty($fs) && strpos($fs, 'UNKNOWN') !== false && isset(phodevi::$vfs->mounts))
 			{
 				$mounts = phodevi::$vfs->mounts;
 				$fs_r = array();
@@ -1564,7 +1568,11 @@ class phodevi_system extends phodevi_device_interface
 			$desktop_environment = 'LXQt';
 			if(pts_client::executable_in_path('lxqt-about'))
 			{
-				$desktop_version = pts_strings::last_in_string(trim(shell_exec('lxqt-about --version | grep liblxqt 2> /dev/null')));
+				$lxqt = shell_exec('lxqt-about --version | grep liblxqt 2> /dev/null');
+				if(!empty($lxqt))
+				{
+					$desktop_version = pts_strings::last_in_string(trim($lxqt));
+				}
 			}
 		}
 		else if(pts_client::is_process_running('lxsession') || $desktop_session == 'lxde')

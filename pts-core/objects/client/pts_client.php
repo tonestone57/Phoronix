@@ -367,7 +367,7 @@ class pts_client
 			while($physical_cores >= pow(($i + 1), 3));
 
 			$tpc = phodevi::read_property('cpu', 'core-count') / $physical_cores;
-			if($tpc < 1 || !is_integer($tpc))
+			if($tpc < 1 || !is_int($tpc))
 			{
 				$tpc = 1;
 			}
@@ -659,7 +659,7 @@ class pts_client
 					// 'udisks --dump',
 					//'upower --dump',
 					'dmidecode',
-					'hwloc-ls',
+					//'hwloc-ls', // hanging on Ubuntu 26.04
 					'numactl -H',
 					);
 
@@ -2165,7 +2165,7 @@ class pts_client
 				}
 				else
 				{
-					$possible_browsers = array('x-www-browser', 'google-chrome', 'firefox', 'mozilla', 'chromium', 'iceweasel', 'konqueror', 'epiphany', 'midori', 'epiphany-browser', 'epiphany', 'falkon', 'qupzilla', 'open', 'xdg-open');
+					$possible_browsers = array('x-www-browser', 'google-chrome', 'google-chrome-stable', 'google-chrome-unstable', 'google-chrome-beta', 'firefox', 'mozilla', 'chromium', 'iceweasel', 'konqueror', 'epiphany', 'midori', 'epiphany-browser', 'epiphany', 'falkon', 'qupzilla', 'open', 'xdg-open', 'brave-browser');
 
 					// First try to see if a browser is already running and use that
 					foreach($possible_browsers as &$b)
@@ -2331,6 +2331,7 @@ class pts_client
 		{
 			return;
 		}*/
+		static $too_much_socket_transport_garbage = 0;
 
 		switch($error_code)
 		{
@@ -2362,7 +2363,17 @@ class pts_client
 				}
 				else if(strpos($error_string, 'Unable to find the socket transport') !== false || strpos($error_string, 'SSL: Connection reset') !== false)
 				{
-					$error_string = 'PHP OpenSSL support is needed to handle HTTPS downloads.';
+					if($too_much_socket_transport_garbage > 10)
+					{
+						return;
+					}
+
+					$error_string = 'PHP OpenSSL support is needed to handle HTTPS downloads or your Internet connection is otherwise blocking access.';
+					$too_much_socket_transport_garbage++;
+					if($too_much_socket_transport_garbage == 10)
+					{
+						$error_string .= ' Suppressing future occurrences of this frequent warning.';
+					}
 					$error_file = null;
 					$error_line = null;
 				}
