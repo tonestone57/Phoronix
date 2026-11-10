@@ -768,12 +768,14 @@ class pts_result_file_analyzer
 			'cpu.power' => 'CPU Power Consumption',
 			'gpu.power' => 'GPU Power Consumption',
 			'sys.power' => 'System Power Consumption',
+			'sys.temp' => 'System Temp',
 			'cpu.peak-freq' => 'CPU Peak Freq',
 			'cpu.usage' => 'CPU Usage',
 			'cpu.temp' => 'CPU Temp',
 			'gpu.temp' => 'GPU Temp',
 			'hdd.temp' => 'Drive Temp',
 			'memory.temp' => 'Memory Temp',
+			'memory.usage' => 'Memory Usage',
 			);
 		$results = array();
 		$results_units = array();

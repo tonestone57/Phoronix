@@ -3,8 +3,8 @@
 /*
 	Phoronix Test Suite
 	URLs: http://www.phoronix.com, http://www.phoronix-test-suite.com/
-	Copyright (C) 2008 - 2021, Phoronix Media
-	Copyright (C) 2008 - 2021, Michael Larabel
+	Copyright (C) 2008 - 2026, Phoronix Media
+	Copyright (C) 2008 - 2026, Michael Larabel
 	phodevi_motherboard.php: The PTS Device Interface object for the motherboard
 
 	This program is free software; you can redistribute it and/or modify
@@ -523,6 +523,10 @@ class phodevi_motherboard extends phodevi_device_interface
 		{
 			$bios_version = phodevi_linux_parser::read_sys_dmi('bios_version');
 		}
+		else if(phodevi::is_macos())
+		{
+			$bios_version = phodevi_osx_parser::read_osx_system_profiler('SPHardwareDataType', 'SystemFirmwareVersion');
+		}
 		else if(phodevi::is_windows())
 		{
 			$bios_version = trim(phodevi_windows_parser::get_wmi_object('win32_bios', 'SMBIOSBIOSVersion'));
@@ -551,6 +555,11 @@ class phodevi_motherboard extends phodevi_device_interface
 		if(phodevi::is_macos())
 		{
 			$info = phodevi_osx_parser::read_osx_system_profiler('SPHardwareDataType', 'ModelName');
+			$model_num = phodevi_osx_parser::read_osx_system_profiler('SPHardwareDataType', 'ModelNumber');
+			if(!empty($model_num))
+			{
+				$info .= ' '  . $model_num;
+			}
 		}
 		else if(phodevi::is_solaris())
 		{

@@ -3,8 +3,8 @@
 /*
 	Phoronix Test Suite
 	URLs: http://www.phoronix.com, http://www.phoronix-test-suite.com/
-	Copyright (C) 2008 - 2024, Phoronix Media
-	Copyright (C) 2008 - 2024, Michael Larabel
+	Copyright (C) 2008 - 2026, Phoronix Media
+	Copyright (C) 2008 - 2026, Michael Larabel
 	phodevi_cpu.php: The PTS Device Interface object for the CPU / processor
 
 	This program is free software; you can redistribute it and/or modify
@@ -167,14 +167,20 @@ class phodevi_cpu extends phodevi_device_interface
 	{
 		$physical_cores = null;
 
-		if(phodevi::is_linux())
+		if(($n = getenv('NUM_CPU_PHYSICAL_CORES')) && is_numeric($n) && $n > 0)
+		{
+			// NUM_CPU_PHYSICAL_CORES can be used for overriding the number of exposed cores/threads to tests, matches the name of the env var set by PTS to test scripts
+			$physical_cores = $n;
+		}
+		else if(phodevi::is_linux())
 		{
 			$physical_cores = phodevi_cpu::cpuinfo_core_count();
 
 			if(empty($physical_cores) || $physical_cores == phodevi::read_property('cpu', 'thread-count'))
 			{
 				// Needed for POWER9 at least
-				if(isset(phodevi::$vfs->lscpu) && ($t = strpos(phodevi::$vfs->lscpu, 'Core(s) per socket:')))
+				// On AArch64, GB10 with different core layouts has issues with the core per sockets handling at least
+				if(isset(phodevi::$vfs->lscpu) && ($t = strpos(phodevi::$vfs->lscpu, 'Core(s) per socket:')) && (strpos(phodevi::$vfs->lscpu, 'aarch64') == false || strpos(phodevi::$vfs->lscpu, 'Core(s) per socket:') == strrpos(phodevi::$vfs->lscpu, 'Core(s) per socket:')))
 				{
 					$lscpu = substr(phodevi::$vfs->lscpu, $t + strlen('Core(s) per socket:') + 1);
 					$lscpu = substr($lscpu, 0, strpos($lscpu, PHP_EOL));
@@ -923,6 +929,22 @@ class phodevi_cpu extends phodevi_device_interface
 						case '0x039':
 							$new_info .= ' M2 Max';
 							break;
+						case '0x042':
+						case '0x043':
+							$new_info .= ' M3';
+							break;
+						case '0x044':
+						case '0x045':
+							$new_info .= ' M3 Pro';
+							break;
+						case '0x048':
+						case '0x049':
+							$new_info .= ' M3 Max';
+							break;
+						case '0x052':
+						case '0x053':
+							$new_info .= ' M4';
+							break;
 					}
 				}
 				else if($implementer == '0x4e')
@@ -938,6 +960,9 @@ class phodevi_cpu extends phodevi_device_interface
 							break;
 						case '0x010':
 							$new_info .= ' Olympus';
+							break;
+						case '0x011':
+							$new_info .= ' Rigel';
 							break;
 					}
 				}
@@ -988,9 +1013,16 @@ class phodevi_cpu extends phodevi_device_interface
 					switch($part)
 					{
 						case '0xac3':
-						case '0xac4':
-						case '0xac5':
 							$new_info .= 'One';
+							break;
+						case '0xac4':
+							$new_info .= 'One M';
+							break;
+						case '0xac5':
+							$new_info .= 'One MX';
+							break;
+						case '0xac7':
+							$new_info .= 'One Aurora';
 							break;
 					}
 				}
@@ -1264,6 +1296,10 @@ class phodevi_cpu extends phodevi_device_interface
 		else if(phodevi::is_macos())
 		{
 			$family = phodevi_bsd_parser::read_sysctl(array('machdep.cpu.family'));
+			if(empty($family))
+			{
+				$family = phodevi_bsd_parser::read_sysctl(array('machdep.cpu.brand_string'));
+			}
 		}
 
 		return $family;
@@ -1458,7 +1494,7 @@ class phodevi_cpu extends phodevi_device_interface
 		{
 			$amd_map[26][$i] = 'Zen 6';
 		}
-		for($i = 192; $i <= 207; $i++)
+		for($i = 192; $i <= 239; $i++)
 		{
 			$amd_map[26][$i] = 'Zen 6';
 		}
@@ -1554,6 +1590,7 @@ class phodevi_cpu extends phodevi_device_interface
 				213 => 'Wildcat Lake',
 				215 => 'Bartlett Lake',
 				221 => 'Clearwater Forest',
+				//221 => 'Panther Lake',
 				),
 			15 => array(
 				1 => 'Clarksfield',
@@ -1596,7 +1633,7 @@ class phodevi_cpu extends phodevi_device_interface
 		{
 			return $intel_map[$family][$model];
 		}
-		if(isset($other_map[$family][$model]))
+		if($family != null && $model != null && isset($other_map[$family][$model]))
 		{
 			return $other_map[$family][$model];
 		}

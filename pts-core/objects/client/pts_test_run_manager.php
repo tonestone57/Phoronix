@@ -432,17 +432,7 @@ class pts_test_run_manager
 					echo PHP_EOL . 'The name of the saved file must have between 2 and 126 characters in length.' . PHP_EOL;
 				}
 
-				$prompt = '    Enter a name for the result file: ';
-				if(function_exists('readline') && function_exists('readline_completion_function'))
-				{
-					pts_user_io::$readline_completion_possibilities = pts_tests::test_results_by_date();
-					readline_completion_function(array('pts_user_io', 'readline_completion_handler'));
-					$save_name = readline($prompt);
-				}
-				else
-				{
-					$save_name = pts_user_io::read_user_input($prompt);
-				}
+				$save_name = pts_user_io::read_user_input('    Enter a name for the result file: ', pts_tests::test_results_by_date());
 			}
 		}
 
@@ -499,17 +489,8 @@ class pts_test_run_manager
 				}
 				else
 				{
-					$prompt = '    Enter a unique name to describe this test run / configuration: ';
-					if(function_exists('readline') && function_exists('readline_completion_function'))
-					{
-						pts_user_io::$readline_completion_possibilities = array_map(array('pts_strings', 'trim_search_query'), array_merge(phodevi::system_hardware(false), phodevi::system_software(false)));
-						readline_completion_function(array('pts_user_io', 'readline_completion_handler'));
-						$results_identifier = readline($prompt);
-					}
-					else
-					{
-						$results_identifier = pts_user_io::read_user_input($prompt);
-					}
+					$results_identifier = pts_user_io::read_user_input('    Enter a unique name to describe this test run / configuration: ',
+						array_merge($current_identifiers, array_map(array('pts_strings', 'trim_search_query'), array_merge(phodevi::system_hardware(false), phodevi::system_software(false)))));
 					$results_identifier = self::clean_results_identifier($results_identifier);
 				}
 				$times_tried++;
@@ -521,13 +502,13 @@ class pts_test_run_manager
 					// Identifier already used in this result file...
 					$do_repeat_prompt = true;
 
-					if(isset($current_hardware[$identifier_pos]) && $current_hardware[$identifier_pos] != phodevi::system_hardware(true))
+					if(isset($current_hardware[$identifier_pos]) && $current_hardware[$identifier_pos] != phodevi::system_hardware(true) && pts_env::read('IGNORE_HW_DIFFERENCE') == false)
 					{
-						pts_client::$display->generic_prompt(pts_client::cli_just_bold('Current hardware does not match the saved data matching this result identifier.'));
+						pts_client::$display->generic_prompt(pts_client::cli_just_bold('Current hardware does not match the saved data matching this result identifier. Ignore this check via the IGNORE_HW_DIFFERENCE=1 environment variable.'));
 					}
-					else if(isset($current_software[$identifier_pos]) && $current_software[$identifier_pos] != phodevi::system_software(true))
+					else if(isset($current_software[$identifier_pos]) && $current_software[$identifier_pos] != phodevi::system_software(true) && pts_env::read('IGNORE_SW_DIFFERENCE') == false)
 					{
-						pts_client::$display->generic_prompt(pts_client::cli_just_bold('Current software does not match the saved data matching this result identifier.'));
+						pts_client::$display->generic_prompt(pts_client::cli_just_bold('Current software does not match the saved data matching this result identifier. Ignore this check via the IGNORE_SW_DIFFERENCE=1 environment variable.'));
 					}
 					else
 					{
