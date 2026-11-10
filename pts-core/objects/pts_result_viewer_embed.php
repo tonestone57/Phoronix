@@ -587,7 +587,7 @@ class pts_result_viewer_embed
 		$this->obtain_extra_attributes($extra_attributes);
 		$res = pts_render::render_graph_inline_embed($test_result, $this->result_file, $extra_attributes);
 		$this->print_handler($PAGE, '<section style="text-align: center;">');
-		$this->print_handler($PAGE, $res . '<br />' . $this->graph_export_handler($res, $result_file, $test_result));
+		$this->print_handler($PAGE, $res . '<br />' . $this->graph_export_handler($res, $this->result_file, $test_result));
 		if($test_result->get_annotation() != null)
 		{
 			$this->print_handler($PAGE, '<p class="mini">' . pts_strings::sanitize($test_result->get_annotation()) . '</p>');
