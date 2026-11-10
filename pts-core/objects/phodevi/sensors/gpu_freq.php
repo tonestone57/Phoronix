@@ -3,8 +3,8 @@
 /*
 	Phoronix Test Suite
 	URLs: http://www.phoronix.com, http://www.phoronix-test-suite.com/
-	Copyright (C) 2009 - 2018, Phoronix Media
-	Copyright (C) 2009 - 2018, Michael Larabel
+	Copyright (C) 2009 - 2025, Phoronix Media
+	Copyright (C) 2009 - 2025, Michael Larabel
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//TODO refactor and fix returning of two values
 class gpu_freq extends phodevi_sensor
 {
 	const SENSOR_TYPE = 'gpu';
@@ -30,9 +29,7 @@ class gpu_freq extends phodevi_sensor
 	public function read_sensor()
 	{
 		// Graphics processor real/current frequency
-		$show_memory = false;
 		$core_freq = 0;
-		$mem_freq = 0;
 
 		if(phodevi::is_haiku())
 		{
@@ -45,7 +42,6 @@ class gpu_freq extends phodevi_sensor
 
 			$nv_freq = pts_strings::comma_explode($nv_freq);
 			$core_freq = isset($nv_freq[0]) ? $nv_freq[0] : 0;
-			$mem_freq = isset($nv_freq[1]) ? $nv_freq[1] : 0;
 		}
 		else if(phodevi::is_linux())
 		{
@@ -62,21 +58,6 @@ class gpu_freq extends phodevi_sensor
 				if(is_numeric($pp))
 				{
 					$core_freq = $pp;
-					if(is_readable('/sys/class/drm/card0/device/pp_dpm_mclk'))
-					{
-						$pp = PHP_EOL . file_get_contents('/sys/class/drm/card0/device/pp_dpm_mclk');
-						$pp = substr($pp, 0, strpos($pp, '*'));
-						$pp = substr($pp, strrpos($pp, PHP_EOL));
-						if(($x = strpos($pp, ': ')) !== false)
-						{
-							$pp = substr($pp, $x + 2);
-						}
-						$pp = trim(str_replace(array('*', 'Mhz'), '', $pp));
-						if(is_numeric($pp))
-						{
-							$mem_freq = $pp;
-						}
-					}
 				}
 			}
 			else if(isset(phodevi::$vfs->radeon_pm_info))
@@ -100,9 +81,6 @@ class gpu_freq extends phodevi_sensor
 						case 'current engine clock':
 							$core_freq = pts_arrays::first_element(explode(' ', $value)) / 1000;
 							break;
-						case 'current memory clock':
-							$mem_freq = pts_arrays::first_element(explode(' ', $value)) / 1000;
-							break;
 					}
 				}
 
@@ -119,21 +97,6 @@ class gpu_freq extends phodevi_sensor
 						}
 
 						$core_freq = $x;
-					}
-				}
-				if($mem_freq == null && ($x = strpos(phodevi::$vfs->radeon_pm_info, 'mclk: ')))
-				{
-					$x = substr(phodevi::$vfs->radeon_pm_info, ($x + strlen('mclk: ')));
-					$x = substr($x, 0, strpos($x, ' '));
-
-					if(is_numeric($x))
-					{
-						if($x > 1000)
-						{
-							$x = $x / 100;
-						}
-
-						$mem_freq = $x;
 					}
 				}
 			}
@@ -159,16 +122,6 @@ class gpu_freq extends phodevi_sensor
 						$core_freq = $core_string;
 					}
 				}
-
-				$mem_string = array_search('memory', $performance_level);
-				if($mem_string !== false && isset($performance_level[($mem_string + 1)]))
-				{
-					$mem_string = str_ireplace('MHz', '', $performance_level[($mem_string + 1)]);
-					if(is_numeric($mem_string) && $mem_string > $mem_freq)
-					{
-						$mem_freq = $mem_string;
-					}
-				}
 			}
 			else if(isset(phodevi::$vfs->i915_cur_delayinfo))
 			{
@@ -188,22 +141,12 @@ class gpu_freq extends phodevi_sensor
 			}
 		}
 
-		if(!is_numeric($core_freq))
+		if(!is_numeric($core_freq) || $core_freq == 0)
 		{
-			$core_freq = 0;
-		}
-		if(!is_numeric($mem_freq))
-		{
-			$mem_freq = 0;
-		}
-
-		if($core_freq == 0 && $mem_freq == 0)
-		{
-			$show_memory = false;
 			$core_freq = -1;
 		}
 
-		return $show_memory ? array($core_freq, $mem_freq) : $core_freq;
+		return $core_freq;
 	}
 }
 
